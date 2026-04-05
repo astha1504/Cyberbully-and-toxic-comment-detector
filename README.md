@@ -1,7 +1,9 @@
+# Cyberbully-and-toxic-comment-detector
+>>>>>>> aee306da1c21457049449a8199ebe0715e18baa3
+=======
+# Cyberbully and Toxic Comment Detector
 
-# Social Media Web App
-
-This project is a full-stack social media web application 🌐 that has been developed using the **MERN stack 🖥️** and **Rest API 🚀**, In this social media platform where you can share posts, like/unlike posts, Follow/Unfollow users and more.
+This project is a full-stack social media web application 🌐 that has been developed using the **MERN stack 🖥️** and **Rest API 🚀**. It includes cyberbullying and toxic comment detection capabilities. Users can share posts, like/unlike posts, follow/unfollow users, and more.
 
 ## 🖥️ Technologies :
   
@@ -21,7 +23,6 @@ This project is a full-stack social media web application 🌐 that has been dev
 - **Rest API**
 - **JWT Authentication**
 
-
 ## 🚀 Features :
 
 - SignUp/Register Page.
@@ -34,7 +35,7 @@ This project is a full-stack social media web application 🌐 that has been dev
 - View No Of Followers/Following Of User.
 - View Other Posts By Follow Users And React On That Posts.
 - Update/Edit Profile Page User Data.
-
+- Cyberbullying and toxic comment detection.
 
 ### **SignUp/Register Page**  :
 
@@ -81,6 +82,9 @@ This project is a full-stack social media web application 🌐 that has been dev
 - Open command line in the cloned folder,
     - To install dependencies for frontend , run  `npm install` in `/client` folder.
     - To run frontend type command `npm start` in `/client` folder.
-    - To install dependencies for backend, run  `npm install` in `/server` folder.
-    - To run backend type command `nodemon` in server folder.
+    - To install dependencies for backend, run  `npm install` in `/Server` folder.
+    - To run backend type command `nodemon` in Server folder.
     
+=======
+# Cyberbully-and-toxic-comment-detector
+>>>>>>> aee306da1c21457049449a8199ebe0715e18baa3
