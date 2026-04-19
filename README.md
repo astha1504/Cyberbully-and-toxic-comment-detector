@@ -1,10 +1,10 @@
-# 🌟 Socialite - Full Stack Social Media Platform
+#  Socialite - Social Media Platform
 
 A beautiful Instagram-like social media platform built with **React + Vite** (frontend) and **Python Flask + Socket.IO** (backend), with **MongoDB Atlas** as the database.
 
 ---
 
-## ✨ Features
+##  Features
 
 | Category | Features |
 |----------|---------|
@@ -21,7 +21,7 @@ A beautiful Instagram-like social media platform built with **React + Vite** (fr
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 social media app/
@@ -31,7 +31,7 @@ social media app/
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Configure MongoDB Atlas
 
@@ -68,7 +68,7 @@ Frontend runs at: **http://localhost:5173**
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 - **React 18** + **Vite**
@@ -100,7 +100,7 @@ Frontend runs at: **http://localhost:5173**
 
 ---
 
-## 🔌 API Endpoints
+##  API Endpoints
 
 ### Auth
 | Method | Endpoint | Description |
@@ -150,7 +150,7 @@ Frontend runs at: **http://localhost:5173**
 
 ---
 
-## 🎨 UI Theme
+##  UI Theme
 
 The app supports **Light** and **Dark** mode, toggled from the navbar. Theme is persisted in `localStorage`.
 
