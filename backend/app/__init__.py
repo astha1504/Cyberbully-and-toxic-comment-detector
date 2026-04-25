@@ -15,11 +15,12 @@ def create_app():
     
     CORS(app, resources={r"/*": {"origins": "*"}})
     
-    from app.routes import auth, posts, users, chat
+    from app.routes import auth, posts, users, chat, toxicity
     app.register_blueprint(auth.bp)
     app.register_blueprint(posts.bp)
     app.register_blueprint(users.bp)
     app.register_blueprint(chat.bp)
+    app.register_blueprint(toxicity.bp)
     
     from app import socket_events
     socketio.init_app(app)

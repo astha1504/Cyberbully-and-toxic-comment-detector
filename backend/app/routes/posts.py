@@ -140,12 +140,25 @@ def add_comment(current_user_id, post_id):
         users_collection = get_users_collection()
         user = users_collection.find_one({'_id': ObjectId(current_user_id)})
         
+        comment_content = data['content']
+        
+        from app.ml import predict_toxicity
+        toxicity_result = predict_toxicity(comment_content)
+        
+        if toxicity_result['is_toxic']:
+            return jsonify({
+                'error': 'Your comment was flagged as potentially toxic. Please revise your comment.',
+                'is_toxic': True,
+                'warning': 'This comment may be considered toxic. Please be respectful.',
+                'confidence': toxicity_result['confidence']
+            }), 400
+        
         comment = {
             'post_id': ObjectId(post_id),
             'user_id': ObjectId(current_user_id),
             'user_name': user['name'],
             'user_profile_picture': user['profile_picture'],
-            'content': data['content'],
+            'content': comment_content,
             'created_at': datetime.utcnow()
         }
         
@@ -156,7 +169,10 @@ def add_comment(current_user_id, post_id):
             'user_name': comment['user_name'],
             'user_profile_picture': comment['user_profile_picture'],
             'content': comment['content'],
-            'created_at': comment['created_at'].isoformat()
+            'created_at': comment['created_at'].isoformat(),
+            'post_id': str(comment['post_id']),
+            'user_id': str(comment['user_id']),
+            'is_toxic': False
         }), 201
         
     except Exception as e:
@@ -171,6 +187,7 @@ def get_comments(current_user_id, post_id):
         for comment in comments:
             comment['id'] = str(comment['_id'])
             comment['user_id'] = str(comment['user_id'])
+            comment['post_id'] = str(comment['post_id'])
             comment['created_at'] = comment['created_at'].isoformat()
             del comment['_id']
         

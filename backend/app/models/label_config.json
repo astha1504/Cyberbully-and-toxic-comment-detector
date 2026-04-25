@@ -1,0 +1,25 @@
+{
+  "label2id": {
+    "non_offensive": 0,
+    "abusive": 1,
+    "hate_speech": 2
+  },
+  "id2label": {
+    "0": "non_offensive",
+    "1": "abusive",
+    "2": "hate_speech"
+  },
+  "action_rules": {
+    "non_offensive": "allow",
+    "abusive": "warn_user",
+    "hate_speech": "flag_review"
+  },
+  "thresholds": {
+    "flag_review": 0.6,
+    "warn_user": 0.6,
+    "low_conf": 0.5
+  },
+  "model_version": "v5",
+  "num_classes": 3,
+  "max_len": 128
+}

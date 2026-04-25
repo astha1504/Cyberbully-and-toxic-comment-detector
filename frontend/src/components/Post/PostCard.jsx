@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { likePost, deletePost, addComment, getComments, deleteComment } from '../../services/api';
+import { likePost, deletePost, addComment, getComments, deleteComment, checkToxicity } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Trash2, Send, MoreHorizontal, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -60,10 +60,18 @@ const PostCard = ({ post, onDelete }) => {
     if (!commentText.trim()) return;
     try {
       const { data } = await addComment(post.id, { content: commentText });
-      setComments((prev) => [data, ...prev]);
-      setCommentText('');
+      if (data.is_toxic === false) {
+        setComments((prev) => [data, ...prev]);
+        setCommentText('');
+      }
     } catch (err) {
-      toast.error('Failed to add comment');
+      const errorMsg = err.response?.data?.error || 'Failed to add comment';
+      const isToxic = err.response?.data?.is_toxic;
+      if (isToxic) {
+        toast.error('Comment flagged as toxic. Please revise your words.');
+      } else {
+        toast.error(errorMsg);
+      }
     }
   };
 

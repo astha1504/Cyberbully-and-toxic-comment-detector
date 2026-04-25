@@ -9,3 +9,6 @@ flask-bcrypt
 dnspython
 cloudinary
 eventlet
+torch
+transformers
+numpy

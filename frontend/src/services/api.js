@@ -54,4 +54,7 @@ export const getConversations = () => API.get('/chat/conversations');
 export const getMessages = (conversationId) => API.get(`/chat/messages/${conversationId}`);
 export const createConversation = (userId) => API.post('/chat/conversation', { user_id: userId });
 
+// Toxicity
+export const checkToxicity = (text) => API.post('/toxicity/check', { text });
+
 export default API;
