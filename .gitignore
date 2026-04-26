@@ -5,3 +5,7 @@ __pycache__
 *.pyc
 venv
 .DS_Store
+backend/app/models/
+backend/app/models/*.bin
+backend/app/models/*.safetensors
+backend/app/models/*.pt
