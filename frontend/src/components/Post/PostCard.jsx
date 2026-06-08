@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { likePost, deletePost, addComment, getComments, deleteComment, checkToxicity } from '../../services/api';
+import { likePost, deletePost, addComment, getComments, deleteComment } from '../../services/api';
+import { useSocket } from '../../context/SocketContext';
+
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Trash2, Send, MoreHorizontal, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -17,8 +21,10 @@ const PostCard = ({ post, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
+  const { socket } = useSocket();
 
   const handleLike = async () => {
+
     try {
       const { data } = await likePost(post.id);
       setLiked(data.liked);
@@ -59,10 +65,15 @@ const PostCard = ({ post, onDelete }) => {
     e.preventDefault();
     if (!commentText.trim()) return;
     try {
-      const { data } = await addComment(post.id, { content: commentText });
-      if (data.is_toxic === false) {
-        setComments((prev) => [data, ...prev]);
-        setCommentText('');
+      const payload = { content: commentText };
+      const { data } = await addComment(post.id, payload);
+
+      // If backend marks it as pending, we still render instantly.
+      setComments((prev) => [data, ...prev]);
+      setCommentText('');
+
+      if (data.moderation_status === 'flagged' || data.is_toxic) {
+        toast.error(data.warning?.warning || 'This comment may be considered toxic. Please be respectful.');
       }
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Failed to add comment';
@@ -99,7 +110,39 @@ const PostCard = ({ post, onDelete }) => {
     return date.toLocaleDateString();
   };
 
+  // Listen for moderation updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handler = (data) => {
+      const { comment_id } = data || {};
+      if (!comment_id) return;
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === comment_id
+            ? {
+                ...c,
+                is_toxic: true,
+                moderation_status: 'flagged',
+              }
+            : c
+        )
+      );
+
+      if (data?.confidence) {
+        toast.error('This comment may be considered toxic. Please be respectful.');
+      }
+    };
+
+    socket.on('comment_flagged', handler);
+    return () => {
+      socket.off('comment_flagged', handler);
+    };
+  }, [socket]);
+
   return (
+
     <motion.div
       className="post-card"
       initial={{ opacity: 0, y: 15 }}
@@ -237,7 +280,10 @@ const PostCard = ({ post, onDelete }) => {
                 </div>
               ) : (
                 comments.map((comment) => (
-                  <div key={comment.id} className="comment-item">
+<div
+                      key={comment.id}
+                      className={`comment-item ${comment.moderation_status === 'flagged' || comment.is_toxic ? 'flagged' : ''}`}
+                    >
                     <img
                       src={comment.user_profile_picture}
                       alt=""

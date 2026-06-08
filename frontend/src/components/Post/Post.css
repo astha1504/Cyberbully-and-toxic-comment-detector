@@ -283,6 +283,24 @@
   color: var(--text-primary);
 }
 
+/* Moderation / toxicity UI */
+.comment-item.flagged {
+  opacity: 0.7;
+}
+
+.comment-item.flagged .comment-text {
+  filter: blur(4px);
+  user-select: none;
+}
+
+.comment-item.flagged .comment-username::after {
+  content: " · flagged";
+  font-size: 11px;
+  color: var(--error);
+  font-weight: 600;
+}
+
+
 .comment-delete {
   background: none;
   color: var(--text-secondary);

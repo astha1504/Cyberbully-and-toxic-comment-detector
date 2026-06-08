@@ -7,6 +7,7 @@ import cloudinary
 import cloudinary.uploader
 import os
 
+
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key=os.getenv('CLOUDINARY_API_KEY'),
@@ -145,36 +146,98 @@ def add_comment(current_user_id, post_id):
         from app.ml import predict_toxicity
         toxicity_result = predict_toxicity(comment_content)
         
-        if toxicity_result['is_toxic']:
-            return jsonify({
-                'error': 'Your comment was flagged as potentially toxic. Please revise your comment.',
-                'is_toxic': True,
+        # If comment is toxic, do not block creation.
+        # Instead return the created comment with a warning flag for the UI.
+        is_toxic = bool(toxicity_result.get('is_toxic'))
+        warning_payload = None
+        if is_toxic:
+            warning_payload = {
                 'warning': 'This comment may be considered toxic. Please be respectful.',
-                'confidence': toxicity_result['confidence']
-            }), 400
-        
+                'confidence': toxicity_result.get('confidence'),
+                'label': toxicity_result.get('label'),
+            }
+
+        # Insert comment immediately to avoid waiting for model inference.
         comment = {
             'post_id': ObjectId(post_id),
             'user_id': ObjectId(current_user_id),
             'user_name': user['name'],
             'user_profile_picture': user['profile_picture'],
             'content': comment_content,
-            'created_at': datetime.utcnow()
+            'created_at': datetime.utcnow(),
+            # moderation state for UI blur/hide
+            'moderation_status': 'pending',
+            'is_toxic': False,
         }
-        
+
         result = get_comments_collection().insert_one(comment)
-        
+        inserted_id = result.inserted_id
+
+        # Run moderation asynchronously (hide/blurs toxic comments after posting)
+        # so the user doesn't wait on model inference.
+        try:
+            from app.ml import predict_toxicity
+            from threading import Thread
+            from app import socketio
+
+
+            def _moderate():
+                try:
+                    toxicity_result = predict_toxicity(comment_content)
+                    toxic = bool(toxicity_result.get('is_toxic'))
+
+                    updated = get_comments_collection().update_one(
+                        {'_id': inserted_id},
+                        {
+                            '$set': {
+                                'is_toxic': toxic,
+                                'moderation_status': 'flagged' if toxic else 'approved',
+                            }
+                        },
+                    )
+
+                    # Debug logs to avoid silent moderation failures
+                    print('[moderate] comment_id=', str(inserted_id),
+                          'text=', comment_content,
+                          'toxicity=', toxicity_result,
+                          'updated_count=', getattr(updated, 'modified_count', None))
+
+                    if toxic:
+                        # Notify commenter so UI can blur/hide quickly.
+                        socketio.emit(
+                            'comment_flagged',
+                            {
+                                'comment_id': str(inserted_id),
+                                'post_id': str(post_id),
+                                'confidence': toxicity_result.get('confidence'),
+                                'label': toxicity_result.get('label'),
+                            },
+                            room=current_user_id,
+                        )
+                        print('[moderate] emitted comment_flagged for', str(inserted_id))
+                except Exception as e:
+                    # avoid breaking request flow, but log the failure
+                    print('[moderate] failed for comment_id=', str(inserted_id), 'error=', str(e))
+                    pass
+
+            Thread(target=_moderate, daemon=True).start()
+
+        except Exception:
+            pass
+
         return jsonify({
-            'id': str(result.inserted_id),
+            'id': str(inserted_id),
             'user_name': comment['user_name'],
             'user_profile_picture': comment['user_profile_picture'],
             'content': comment['content'],
             'created_at': comment['created_at'].isoformat(),
             'post_id': str(comment['post_id']),
             'user_id': str(comment['user_id']),
-            'is_toxic': False
+            'is_toxic': False,
+            'moderation_status': 'pending',
+            'warning': None,
         }), 201
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
