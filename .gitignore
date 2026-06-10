@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+venv/
+ENV/
+env/
+.env
+
+# Large model weights (Local paths relative to this .gitignore)
+model/*.bin
+model/*.safetensors
+model/pytorch_model.bin
+model/pytorch_model_quantized.bin
+
+# OS files
+.DS_Store
+Thumbs.db
