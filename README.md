@@ -1,4 +1,4 @@
-# Socialite: AI Cyberbully & Toxic Comment Detector 🛡️
+# Socialite: AI Cyberbully & Toxic Comment Detector
 
 End-to-end safety analytics: **User Comments → Sequence Classification NLP Model → Real-Time WebSockets → FastAPI Backend → Live React Dashboard**.
 
@@ -20,20 +20,20 @@ graph TD
     F -->|WebSocket Alert| G[Real-Time Notification System]
     
     subgraph "React Frontend System"
-        G -->|Alert Triangle| H[🚨 User Moderation Alert]
-        B -->|Comment Feed| I[💬 Post Feed Update]
-        B -->|Analytics API| J[📊 Moderator Dashboard]
+        G -->|Alert Triangle| H[ User Moderation Alert]
+        B -->|Comment Feed| I[ Post Feed Update]
+        B -->|Analytics API| J[Moderator Dashboard]
     end
 ```
 
-## ✨ Premium Application Features
+##  Premium Application Features
 
 1.  **AI Moderation Engine (Important)**: Real-time detection of abusive, hate, and toxic speech using a hybrid pipeline of keyword checks and deep learning sequence classification.
 2.  **Real-Time WebSocket Notifications**: Integrated STOMP/WebSocket alerts that instantly notify users if a comment violates community guidelines (flashes a red Warning/AlertTriangle).
 3.  **Analytics & Toxicity Heatmap**: A visual admin layout charting the trends of flagged content, overall user toxicity ratings, and general community health metrics.
 4.  **Auto-Blur Detection Preview**: A simulated social media feed showing blurred toxic comments natively alongside clean posts.
 
-## Quick Start — 5 Commands
+## Quick Start
 
 ```bash
 # 1. Clone and install backend dependencies
@@ -55,14 +55,7 @@ cd ../frontend && npm install && npm run dev
 - **API docs**: http://localhost:8000/docs  
 - **App Dashboard**: http://localhost:5173
 
-## Docker (one command)
 
-```bash
-docker compose up --build
-```
-
-- API: http://localhost:8000/docs  
-- Dashboard: http://localhost:5173
 
 ## Running the Toxicity Moderation Engine
 
