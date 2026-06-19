@@ -1,0 +1,64 @@
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
+import { API_URL } from '../utils/constants';
+import toast from 'react-hot-toast';
+
+const SocketContext = createContext();
+
+export const useSocket = () => useContext(SocketContext);
+
+export const SocketProvider = ({ children }) => {
+  const [socket, setSocket] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      const token = localStorage.getItem('token');
+      const wsUrl = API_URL.replace('http', 'ws');
+      const newSocket = new WebSocket(`${wsUrl}/ws/notifications?token=${token}`);
+
+      newSocket.onopen = () => {
+        console.log('WebSocket Connected');
+      };
+
+      newSocket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'message_notification') {
+            setNotifications((prev) => [...prev, data]);
+          } else if (data.type === 'MODERATION_ALERT') {
+            toast.error('One of your comments was flagged as toxic and has been blurred.', {
+              duration: 5000,
+            });
+            setNotifications((prev) => [...prev, data]);
+          }
+        } catch (err) {
+          console.error('WebSocket msg error', err);
+        }
+      };
+
+      setSocket(newSocket);
+
+      return () => {
+        newSocket.close();
+      };
+    }
+  }, [user]);
+
+  const clearNotification = (notificationId) => {
+    setNotifications((prev) =>
+      // Keep old chat log clearing, add id clearing too
+      prev.filter((n) => n.conversation_id !== notificationId && n.comment_id !== notificationId)
+    );
+  };
+
+  return (
+    <SocketContext.Provider value={{ socket, notifications, clearNotification }}>
+      {children}
+    </SocketContext.Provider>
+  );
+};
+
+export default SocketContext;

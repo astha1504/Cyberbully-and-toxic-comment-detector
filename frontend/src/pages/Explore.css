@@ -1,0 +1,131 @@
+.explore-page {
+  padding: 32px 20px 80px;
+}
+
+.explore-container {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.explore-search-wrapper {
+  margin-bottom: 20px;
+}
+
+.explore-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.explore-search-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.explore-search-input {
+  width: 100%;
+  padding: 14px 44px 14px 48px;
+  background: var(--surface-light);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.explore-search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0, 149, 246, 0.08);
+}
+
+.explore-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.clear-search {
+  position: absolute;
+  right: 14px;
+  background: none;
+  color: var(--text-secondary);
+  padding: 4px;
+}
+
+/* Results */
+.explore-results {
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: background 0.3s ease;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  transition: background 0.15s ease;
+}
+
+.result-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme='dark'] .result-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.result-item + .result-item {
+  border-top: 1px solid var(--border);
+}
+
+.result-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-name {
+  font-weight: 600;
+  font-size: 15px;
+  display: block;
+}
+
+.result-bio {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.following-tag {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.explore-loading {
+  display: flex;
+  justify-content: center;
+  padding: 32px;
+}

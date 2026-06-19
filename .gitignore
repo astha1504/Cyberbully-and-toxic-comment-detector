@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+ENV/
+env/
+backend/.venv/
+
+# Node
+node_modules/
+frontend/node_modules/
+dist/
+build/
+.output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models
+model/*.bin
+model/*.safetensors
+model/*.pt
+backend/model/
+
+# Misc
+.vscode/
+.idea/
+.pytest_cache/
+coverage/
