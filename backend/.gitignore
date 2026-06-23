@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+venv/
+ENV/
+env/
+.env
+
+# Large model weights
+backend/model/*.bin
+backend/model/*.safetensors
+backend/model/pytorch_model.bin
+backend/model/pytorch_model_quantized.bin
+ml_models/
+
+# OS files
+.DS_Store
+Thumbs.db
