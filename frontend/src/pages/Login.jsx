@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginUser } from '../services/api';
+import { loginUser } from '../services/authService';  // was '../services/api'
+import API from '../services/api';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -23,12 +24,20 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const { data } = await loginUser({ email, password });
-      login(data.user, data.token);
+      const { data } = await loginUser({ email: email, password: password });
+      const userRes = await API.get('/auth/me', {
+        headers: { Authorization: `Bearer ${data.access_token}` }
+      });
+      login(userRes.data, data.access_token);
       toast.success('Welcome back!');
       navigate('/');
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || err.response?.data?.error || 'Login failed';
+      const detail = err.response?.data?.detail;
+      const errorMsg = typeof detail === 'string' 
+        ? detail 
+        : typeof detail === 'object' 
+          ? detail.map(d => d.msg || JSON.stringify(d)).join(', ')
+          : err.response?.data?.error || 'Login failed';
       toast.error(errorMsg);
     } finally {
       setLoading(false);
