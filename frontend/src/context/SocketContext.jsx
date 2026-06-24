@@ -15,7 +15,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       const token = localStorage.getItem('token');
-      const wsUrl = API_URL.replace('http', 'ws');
+      const wsUrl = API_URL.replace(/^http/, 'ws').replace(/\/$/, '');
       const newSocket = new WebSocket(`${wsUrl}/ws/notifications?token=${token}`);
 
       newSocket.onopen = () => {

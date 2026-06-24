@@ -25,10 +25,13 @@ const Home = () => {
     setLoading(true);
     setError(null);
     try {
-      const [postsRes, suggestionsRes] = await Promise.all([
-        getPosts(),
-        getSuggestions(),
-      ]);
+      const postsRes = await getPosts();
+      let suggestionsRes = { data: [] };
+      try {
+        suggestionsRes = await getSuggestions();
+      } catch (err) {
+        console.warn('Suggestions not available:', err.message);
+      }
       // API returns arrays directly
       const postsData = Array.isArray(postsRes.data) ? postsRes.data : [];
       const suggestionsData = Array.isArray(suggestionsRes.data) ? suggestionsRes.data : [];
