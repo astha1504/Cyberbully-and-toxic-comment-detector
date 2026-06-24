@@ -13,12 +13,17 @@ PyObjectId = Annotated[
 class UserBase(BaseModel):
     username: str
     email: EmailStr
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    profile_picture: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
 
 class UserResponse(UserBase):
-    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")
+    followers: int = 0
+    following: int = 0
 
     model_config = {
         "populate_by_name": True,

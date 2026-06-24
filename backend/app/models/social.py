@@ -5,14 +5,15 @@ from .user import PyObjectId
 from bson import ObjectId
 
 class PostBase(BaseModel):
-    content: str
+    caption: str
 
 class PostCreate(PostBase):
-    pass
+    images: Optional[List[str]] = []
 
 class PostResponse(PostBase):
-    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")
     user_id: PyObjectId
+    images: Optional[List[str]] = []
     created_at: datetime
 
     model_config = {
@@ -28,7 +29,7 @@ class CommentCreate(CommentBase):
     pass
 
 class CommentResponse(CommentBase):
-    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")
     user_id: PyObjectId
     moderation_status: str = "pending"
     toxicity_score: Optional[float] = None
@@ -46,7 +47,7 @@ class NotificationBase(BaseModel):
     comment_id: Optional[str] = None
 
 class NotificationResponse(NotificationBase):
-    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+    id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")
     user_id: PyObjectId
     is_read: bool = False
     created_at: datetime

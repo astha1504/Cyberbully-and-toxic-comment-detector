@@ -23,6 +23,7 @@ const PostCard = ({ post, onDelete }) => {
     return `https://ui-avatars.com/api/?background=C56E5A&color=fff&name=${encodeURIComponent(name || 'User')}`;
   };
 
+  const postId = post.id || post._id;
   const postAuthorName = post.user?.name || post.user?.username || 'Unknown';
   const postAuthorId = post.user?.id || post.user_id;
   const postAuthorAvatar = getAvatarUrl(post.user?.profile_picture, postAuthorName);
@@ -30,7 +31,7 @@ const PostCard = ({ post, onDelete }) => {
 
   const handleLike = async () => {
     try {
-      const { data } = await likePost(post.id);
+      const { data } = await likePost(postId);
       setLiked(data.liked);
       setLikesCount((prev) => (data.liked ? prev + 1 : prev - 1));
     } catch (err) {
@@ -40,9 +41,9 @@ const PostCard = ({ post, onDelete }) => {
 
   const handleDelete = async () => {
     try {
-      await deletePost(post.id);
+      await deletePost(postId);
       toast.success('Post deleted');
-      onDelete?.(post.id);
+      onDelete?.(postId);
     } catch (err) {
       toast.error('Failed to delete post');
     }
@@ -52,7 +53,7 @@ const PostCard = ({ post, onDelete }) => {
   const fetchComments = async () => {
     setLoadingComments(true);
     try {
-      const { data } = await getComments(post.id);
+      const { data } = await getComments(postId);
       setComments(data);
     } catch (err) {
       toast.error('Failed to load comments');
@@ -62,7 +63,7 @@ const PostCard = ({ post, onDelete }) => {
 
   const fetchCommentsSilent = async () => {
     try {
-      const { data } = await getComments(post.id);
+      const { data } = await getComments(postId);
       setComments(data);
     } catch (err) {
       // silent fail
@@ -88,7 +89,7 @@ const PostCard = ({ post, onDelete }) => {
     e.preventDefault();
     if (!commentText.trim()) return;
     try {
-      const { data } = await addComment(post.id, { content: commentText });
+      const { data } = await addComment(postId, { content: commentText });
       if (data.is_toxic === false) {
         setComments((prev) => [data, ...prev]);
         setCommentText('');

@@ -31,6 +31,41 @@ async def get_post(id: str):
         raise HTTPException(status_code=404, detail="Post not found")
     return post
 
+@router.post("/{id}/like")
+async def like_post(id: str, current_user: dict = Depends(get_current_user)):
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid post ID")
+    post = await posts_collection.find_one({"_id": ObjectId(id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    likes = post.get("likes", [])
+    user_id = current_user["_id"]
+    if str(user_id) in [str(like) for like in likes]:
+        likes = [like for like in likes if str(like) != str(user_id)]
+        liked = False
+    else:
+        likes.append(user_id)
+        liked = True
+    
+    await posts_collection.update_one({"_id": ObjectId(id)}, {"$set": {"likes": likes}})
+    return {"liked": liked}
+
+@router.delete("/{id}/like")
+async def unlike_post(id: str, current_user: dict = Depends(get_current_user)):
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid post ID")
+    post = await posts_collection.find_one({"_id": ObjectId(id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    likes = post.get("likes", [])
+    user_id = current_user["_id"]
+    likes = [like for like in likes if str(like) != str(user_id)]
+    
+    await posts_collection.update_one({"_id": ObjectId(id)}, {"$set": {"likes": likes}})
+    return {"liked": False}
+
 @router.delete("/{id}")
 async def delete_post(id: str, current_user: dict = Depends(get_current_user)):
     if not ObjectId.is_valid(id):

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import auth, posts, comments, notifications, analytics, websockets
+from .routes import auth, posts, comments, notifications, analytics, websockets, users
 
 app = FastAPI(
     title="AI-Powered Toxic Comment Detector",
@@ -24,6 +24,7 @@ app.include_router(comments.router)
 app.include_router(notifications.router)
 app.include_router(analytics.router)
 app.include_router(websockets.router)
+app.include_router(users.router)
 
 @app.get("/")
 async def root():

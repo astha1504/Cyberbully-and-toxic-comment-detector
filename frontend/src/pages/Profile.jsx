@@ -44,12 +44,12 @@ const Profile = () => {
       setProfile(data.user);
       setPosts(Array.isArray(data.posts) ? data.posts : []);
       setIsFollowing(data.is_following || false);
-      setEditData({
-        name: data.user.name || data.user.username || '',
-        email: data.user.email || '',
-        bio: data.user.bio || '',
-        password: ''
-      });
+setEditData({
+         name: data.user?.name || data.user?.username || '',
+         email: data.user?.email || '',
+         bio: data.user?.bio || '',
+         password: ''
+       });
     } catch (err) {
       console.error('Profile fetch error:', err);
       toast.error('Failed to load profile');
@@ -77,13 +77,14 @@ const Profile = () => {
     e.preventDefault();
     try {
       const payload = {};
-      if (editData.name !== profile.name) payload.name = editData.name;
-      if (editData.bio !== profile.bio) payload.bio = editData.bio;
-      if (editData.email !== profile.email) payload.email = editData.email;
+      const currentName = profile?.name || profile?.username || '';
+      if (editData.name !== currentName) payload.name = editData.name;
+      if (editData.bio !== (profile?.bio || '')) payload.bio = editData.bio;
+      if (editData.email !== profile?.email) payload.email = editData.email;
       if (editData.password) payload.password = editData.password;
 
       await updateProfile(payload);
-      updateUser({ ...user, name: editData.name, bio: editData.bio, email: editData.email });
+      updateUser({ ...user, ...payload, name: editData.name, bio: editData.bio, email: editData.email });
       setProfile((p) => ({ ...p, ...payload }));
       setShowEdit(false);
       toast.success('Profile updated!');

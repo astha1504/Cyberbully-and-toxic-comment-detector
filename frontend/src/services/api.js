@@ -34,11 +34,12 @@ export const verifyToken  = ()     => API.get('/auth/me');
 export const createPost = (data)   => API.post('/posts/', data);
 export const getPosts   = ()       => API.get('/posts/');
 export const likePost   = (id)     => API.post(`/posts/${id}/like`);
+export const unlikePost = (id)     => API.delete(`/posts/${id}/like`);
 export const deletePost = (id)     => API.delete(`/posts/${id}`);
 
 // ── Comments ──────────────────────────────────────────────────────────────────
-export const addComment    = (postId, data) => API.post(`/posts/${postId}/comments`, data);
-export const getComments   = (postId)       => API.get(`/posts/${postId}/comments`);
+export const addComment    = (postId, data) => API.post(`/comments/post/${postId}`, data);
+export const getComments   = (postId)       => API.get(`/comments/post/${postId}`);
 export const deleteComment = (commentId)    => API.delete(`/posts/comments/${commentId}`);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
