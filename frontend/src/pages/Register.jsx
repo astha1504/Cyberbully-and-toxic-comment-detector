@@ -28,7 +28,11 @@ const Register = () => {
     }
     setLoading(true);
     try {
-      const { data } = await registerUser({ name, email, password });
+      const { data } = await registerUser({
+          username: name,
+          email: email,
+          password: password
+      });
       login(data.user, data.token);
       toast.success('Account created successfully!');
       navigate('/');
