@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from ..database import comments_collection
+from ..database import comments_collection, users_collection
 from ..routes.auth import get_current_user
 from bson import ObjectId
 
@@ -20,7 +20,20 @@ async def get_overview():
 @router.get("/toxic-comments")
 async def get_toxic_comments():
     # Return last 20 toxic comments for review
-    return await comments_collection.find({"moderation_status": "toxic"}).sort("created_at", -1).limit(20).to_list(20)
+    comments = await comments_collection.find({"moderation_status": "toxic"}).sort("created_at", -1).limit(20).to_list(20)
+    result = []
+    for c in comments:
+        user_id = c.get("user_id")
+        user_name = None
+        if user_id:
+            user = await users_collection.find_one({"_id": ObjectId(user_id)})
+            user_name = user.get("username") if user else None
+        result.append({
+            **{k: v for k, v in c.items() if k != "_id"},
+            "id": str(c.get("_id")),
+            "user_name": user_name
+        })
+    return result
 
 @router.get("/toxicity-trend")
 async def get_toxicity_trend():

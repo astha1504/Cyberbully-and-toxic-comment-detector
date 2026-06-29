@@ -31,7 +31,7 @@ const Profile = () => {
   const [showFollowers, setShowFollowers] = useState(false);
   const [editData, setEditData] = useState({ name: '', email: '', bio: '', password: '' });
 
-  const isOwn = user?.id === userId;
+  const isOwn = (user?.id || user?._id) === userId;
 
   useEffect(() => {
     fetchProfile();
@@ -44,7 +44,7 @@ const Profile = () => {
       setProfile(data.user);
       setPosts(Array.isArray(data.posts) ? data.posts : []);
       setIsFollowing(data.is_following || false);
-setEditData({
+      setEditData({
          name: data.user?.name || data.user?.username || '',
          email: data.user?.email || '',
          bio: data.user?.bio || '',
@@ -138,12 +138,12 @@ setEditData({
         {/* Profile Header */}
         <div className="profile-header">
           <div className="profile-pic-wrapper">
-            <img
-              src={getAvatarUrl(profile?.profile_picture, profile?.name || profile?.username)}
-              alt={profile?.name || profile?.username}
-              className="profile-pic"
-              onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
-            />
+<img
+               src={getAvatarUrl(profile?.profile_picture, profile?.username)}
+               alt={profile?.username}
+               className="profile-pic"
+               onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
+             />
             {isOwn && (
               <label className="pic-change-btn" htmlFor="profile-pic-input">
                 <Camera size={16} />
@@ -160,7 +160,7 @@ setEditData({
 
           <div className="profile-info">
             <div className="profile-name-row">
-              <h2 className="profile-name">{profile?.name || profile?.username}</h2>
+              <h2 className="profile-name">{profile?.username}</h2>
               {isOwn ? (
                 <button
                   className="edit-profile-btn"

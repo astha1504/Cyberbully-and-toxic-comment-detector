@@ -7,10 +7,12 @@ import {
 } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile
+  Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile, AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Chat.css';
+
+const DEFAULT_AVATAR = '/placeholder-avatar.svg';
 
 const Chat = () => {
   const { user } = useAuth();
@@ -26,6 +28,7 @@ const Chat = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showMobileChat, setShowMobileChat] = useState(false);
+  const [toxicityWarning, setToxicityWarning] = useState(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -37,9 +40,11 @@ const Chat = () => {
     if (socket) {
       socket.on('new_message', handleNewMessage);
       socket.on('user_typing', handleTypingEvent);
+      socket.on('toxicity_warning', handleToxicityWarning);
       return () => {
         socket.off('new_message');
         socket.off('user_typing');
+        socket.off('toxicity_warning');
       };
     }
   }, [socket, activeConv]);
@@ -81,8 +86,17 @@ const Chat = () => {
     }
   }, [activeConv]);
 
+  const handleToxicityWarning = useCallback((data) => {
+    setToxicityWarning(data);
+    toast.error(data.message || 'Toxic message detected', {
+      duration: 6000,
+      position: 'top-center',
+    });
+  }, []);
+
   const selectConversation = async (conv) => {
     setActiveConv(conv);
+    setToxicityWarning(null);
     setShowMobileChat(true);
     clearNotification(conv.id);
     try {
@@ -99,7 +113,7 @@ const Chat = () => {
     socket?.emit('send_message', {
       conversation_id: activeConv.id,
       sender_id: user.id,
-      receiver_id: activeConv.user.id,
+      receiver_id: activeConv.user?.id,
       content: newMessage.trim(),
     });
     setNewMessage('');
@@ -117,7 +131,7 @@ const Chat = () => {
     if (socket && activeConv) {
       socket.emit('typing', {
         user_id: user.id,
-        receiver_id: activeConv.user.id,
+        receiver_id: activeConv.user?.id,
         conversation_id: activeConv.id,
         is_typing: isTyping,
       });
@@ -141,13 +155,13 @@ const Chat = () => {
   const startConversation = async (otherUser) => {
     try {
       const { data } = await createConversation(otherUser.id);
-      const conv = {
-        id: data.id,
-        user: {
-          id: otherUser.id,
-          name: otherUser.name,
-          profile_picture: otherUser.profile_picture,
-        },
+const conv = {
+         id: data.id,
+         user: {
+           id: otherUser.id,
+           username: otherUser.username,
+           profile_picture: otherUser.profile_picture,
+         },
         last_message: '',
         last_message_time: '',
       };
@@ -167,13 +181,13 @@ const Chat = () => {
 
   const formatTime = (dateStr) => {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
-  const filteredConversations = conversations.filter((conv) =>
-    conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+const filteredConversations = conversations.filter((conv) =>
+     conv.user?.username?.toLowerCase().includes(searchQuery.toLowerCase())
+   );
 
   return (
     <div className="chat-page" data-theme={theme}>
@@ -204,9 +218,9 @@ const Chat = () => {
           <div className="search-results">
             {searchResults.map((u) => (
               <div key={u.id} className="conv-item" onClick={() => startConversation(u)}>
-                <img src={u.profile_picture} alt="" className="conv-avatar" />
+                <img src={u.profile_picture || DEFAULT_AVATAR} alt="" className="conv-avatar" />
                 <div className="conv-info">
-                  <span className="conv-name">{u.name}</span>
+                  <span className="conv-name">{u.username || 'Unknown User'}</span>
                   <span className="conv-preview">Start a conversation</span>
                 </div>
               </div>
@@ -220,9 +234,9 @@ const Chat = () => {
                 className={`conv-item ${activeConv?.id === conv.id ? 'active' : ''}`}
                 onClick={() => selectConversation(conv)}
               >
-                <img src={conv.user.profile_picture} alt="" className="conv-avatar" />
+                <img src={conv.user?.profile_picture || DEFAULT_AVATAR} alt="" className="conv-avatar" />
                 <div className="conv-info">
-                  <span className="conv-name">{conv.user.name}</span>
+                  <span className="conv-name">{conv.user?.username || 'Unknown User'}</span>
                   <span className="conv-preview">{conv.last_message || 'No messages yet'}</span>
                 </div>
                 {conv.last_message_time && (
@@ -237,20 +251,27 @@ const Chat = () => {
         )}
       </div>
 
-      {/* Chat Window */}
-      <div className={`chat-main ${!showMobileChat ? 'hidden-mobile' : ''}`}>
-        {activeConv ? (
-          <>
-            <div className="chat-main-header">
-              <button className="back-btn-mobile" onClick={() => setShowMobileChat(false)}>
-                <ArrowLeft size={20} />
-              </button>
-              <img src={activeConv.user.profile_picture} alt="" className="chat-header-avatar" />
-              <div className="chat-header-info">
-                <span className="chat-header-name">{activeConv.user.name}</span>
-                {typing && <span className="typing-indicator">typing...</span>}
-              </div>
-            </div>
+{/* Chat Window */}
+       <div className={`chat-main ${!showMobileChat ? 'hidden-mobile' : ''}`}>
+         {activeConv ? (
+           <>
+             <div className="chat-main-header">
+               <button className="back-btn-mobile" onClick={() => setShowMobileChat(false)}>
+                 <ArrowLeft size={20} />
+               </button>
+               <img src={activeConv.user?.profile_picture || DEFAULT_AVATAR} alt="" className="chat-header-avatar" />
+               <div className="chat-header-info">
+                 <span className="chat-header-name">{activeConv.user?.username || 'Unknown User'}</span>
+                 {typing && <span className="typing-indicator">typing...</span>}
+               </div>
+             </div>
+
+             {toxicityWarning && (
+               <div className="toxicity-warning-banner">
+                 <AlertTriangle size={16} className="warning-icon" />
+                 <span>{toxicityWarning.message}</span>
+               </div>
+             )}
 
             <div className="messages-container">
               {messages.map((msg) => (

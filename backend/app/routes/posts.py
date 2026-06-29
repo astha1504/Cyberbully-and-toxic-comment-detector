@@ -11,16 +11,18 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 @router.post("/", response_model=PostResponse)
 async def create_post(post_in: PostCreate, current_user: dict = Depends(get_current_user)):
     post_dict = post_in.model_dump()
-    post_dict["user_id"] = current_user["_id"]
+    post_dict["user_id"] = str(current_user["_id"])
     post_dict["created_at"] = datetime.utcnow()
     
     new_post = await posts_collection.insert_one(post_dict)
     created_post = await posts_collection.find_one({"_id": new_post.inserted_id})
+    created_post["id"] = str(created_post.pop("_id"))
     return created_post
 
 @router.get("/", response_model=List[PostResponse])
 async def get_posts():
-    return await posts_collection.find().to_list(100)
+    posts = await posts_collection.find().to_list(100)
+    return [{**{k: v for k, v in p.items() if k != "_id"}, "id": str(p.get("_id"))} for p in posts]
 
 @router.get("/{id}", response_model=PostResponse)
 async def get_post(id: str):
@@ -29,6 +31,7 @@ async def get_post(id: str):
     post = await posts_collection.find_one({"_id": ObjectId(id)})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    post["id"] = str(post.pop("_id"))
     return post
 
 @router.post("/{id}/like")

@@ -16,6 +16,7 @@ class UserBase(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
     profile_picture: Optional[str] = None
+    friends: List[str] = []
 
 class UserCreate(UserBase):
     password: str

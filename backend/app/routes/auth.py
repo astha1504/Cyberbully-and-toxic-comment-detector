@@ -32,9 +32,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     return user
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register")
 async def register(user_in: UserCreate):
-    # Check if user exists
     if await users_collection.find_one({"username": user_in.username}):
         raise HTTPException(status_code=400, detail="Username already registered")
     if await users_collection.find_one({"email": user_in.email}):
@@ -42,10 +41,24 @@ async def register(user_in: UserCreate):
     
     user_dict = user_in.model_dump()
     user_dict["password"] = get_password_hash(user_in.password)
+    user_dict["followers"] = []
+    user_dict["following"] = []
+    if not user_dict.get("name"):
+        user_dict["name"] = user_in.username
     
     new_user = await users_collection.insert_one(user_dict)
     created_user = await users_collection.find_one({"_id": new_user.inserted_id})
-    return created_user
+    created_user["id"] = str(created_user.pop("_id"))
+    created_user.pop("password", None)
+    created_user["followers"] = len(created_user.get("followers", []))
+    created_user["following"] = len(created_user.get("following", []))
+    
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user_in.username}, expires_delta=access_token_expires
+    )
+    
+    return {"user": created_user, "token": access_token}
 
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -67,4 +80,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user: dict = Depends(get_current_user)):
-    return current_user
+    user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
+    if user:
+        user["id"] = str(user.pop("_id"))
+        user.pop("password", None)
+        user["followers"] = len(user.get("followers", []))
+        user["following"] = len(user.get("following", []))
+    return user

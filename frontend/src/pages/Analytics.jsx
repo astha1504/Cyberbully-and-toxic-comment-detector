@@ -323,7 +323,7 @@ const Analytics = () => {
               <tbody>
                 {toxicComments.map((c, i) => (
                   <tr key={c.id ?? i}>
-                    <td className="table-user">{c.user_name ?? 'Unknown'}</td>
+                    <td className="table-user">{c.user_name || 'Unknown'}</td>
                     <td className="table-content">{c.content?.slice(0, 60)}…</td>
                     <td className="table-confidence">
                       {c.toxicity_score != null

@@ -108,18 +108,18 @@ const Home = () => {
         {/* Sidebar - User & Suggestions */}
         <div className="feed-sidebar">
           <div className="sidebar-user">
-            <Link to={`/profile/${user?.id}`} className="sidebar-user-info">
-              <img
-                src={getAvatarUrl(user?.profile_picture, user?.name)}
-                alt={user?.name || 'You'}
-                className="sidebar-avatar"
-                onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
-              />
-              <div>
-                <span className="sidebar-name">{user?.name || user?.username || 'You'}</span>
-                <span className="sidebar-email">{user?.email}</span>
-              </div>
-            </Link>
+<Link to={`/profile/${user?.id}`} className="sidebar-user-info">
+               <img
+                 src={getAvatarUrl(user?.profile_picture, user?.username)}
+                 alt={user?.username || 'You'}
+                 className="sidebar-avatar"
+                 onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
+               />
+               <div>
+                 <span className="sidebar-name">{user?.username || 'You'}</span>
+                 <span className="sidebar-email">{user?.email}</span>
+               </div>
+             </Link>
           </div>
 
           {suggestions.length > 0 && (
@@ -137,14 +137,14 @@ const Home = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <Link to={`/profile/${s.id}`} className="suggestion-info">
-                      <img
-                        src={getAvatarUrl(s.profile_picture, s.name || s.username)}
-                        alt={s.name || s.username}
-                        className="suggestion-avatar"
-                        onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
-                      />
-                      <div>
-                        <span className="suggestion-name">{s.name || s.username}</span>
+<img
+                         src={getAvatarUrl(s.profile_picture, s.username)}
+                         alt={s.username}
+                         className="suggestion-avatar"
+                         onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
+                       />
+                       <div>
+                         <span className="suggestion-name">{s.username}</span>
                         <span className="suggestion-bio">
                           {s.bio || 'New to Socialite'}
                         </span>

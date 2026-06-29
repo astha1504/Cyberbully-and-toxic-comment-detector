@@ -9,7 +9,8 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 @router.get("/", response_model=List[NotificationResponse])
 async def get_notifications(current_user: dict = Depends(get_current_user)):
-    return await notifications_collection.find({"user_id": current_user["_id"]}).sort("created_at", -1).to_list(100)
+    notifications = await notifications_collection.find({"user_id": str(current_user["_id"])}).sort("created_at", -1).to_list(100)
+    return [{**{k: v for k, v in n.items() if k != "_id"}, "id": str(n.get("_id"))} for n in notifications]
 
 @router.get("/unread-count")
 async def get_unread_count(current_user: dict = Depends(get_current_user)):

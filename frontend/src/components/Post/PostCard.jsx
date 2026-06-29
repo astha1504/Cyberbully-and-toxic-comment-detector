@@ -24,7 +24,7 @@ const PostCard = ({ post, onDelete }) => {
   };
 
   const postId = post.id || post._id;
-  const postAuthorName = post.user?.name || post.user?.username || 'Unknown';
+  const postAuthorName = post.user?.username || 'Unknown';
   const postAuthorId = post.user?.id || post.user_id;
   const postAuthorAvatar = getAvatarUrl(post.user?.profile_picture, postAuthorName);
   const currentUserId = user?.id;

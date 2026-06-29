@@ -18,28 +18,47 @@ export const SocketProvider = ({ children }) => {
       const wsUrl = API_URL.replace(/^http/, 'ws').replace(/\/$/, '');
       const newSocket = new WebSocket(`${wsUrl}/ws/notifications?token=${token}`);
 
-      newSocket.onopen = () => {
-        console.log('WebSocket Connected');
-      };
+      const listeners = {};
 
       newSocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
-          if (data.type === 'message_notification') {
+          const eventType = data.type || data.event;
+          if (eventType === 'message_notification') {
             setNotifications((prev) => [...prev, data]);
-          } else if (data.type === 'MODERATION_ALERT') {
+          } else if (eventType === 'MODERATION_ALERT') {
             toast.error('One of your comments was flagged as toxic and has been blurred.', {
               duration: 5000,
             });
             setNotifications((prev) => [...prev, data]);
+          }
+          if (listeners[eventType]) {
+            listeners[eventType](data.payload || data);
           }
         } catch (err) {
           console.error('WebSocket msg error', err);
         }
       };
 
-      setSocket(newSocket);
+      const adapter = {
+        on: (event, callback) => {
+          listeners[event] = callback;
+        },
+        off: (event) => {
+          delete listeners[event];
+        },
+        emit: (event, payload) => {
+          if (newSocket.readyState === WebSocket.OPEN) {
+            newSocket.send(JSON.stringify({ event, ...payload }));
+          }
+        },
+      };
+
+      newSocket.onopen = () => {
+        console.log('WebSocket Connected');
+      };
+
+      setSocket(adapter);
 
       return () => {
         newSocket.close();
@@ -49,7 +68,6 @@ export const SocketProvider = ({ children }) => {
 
   const clearNotification = (notificationId) => {
     setNotifications((prev) =>
-      // Keep old chat log clearing, add id clearing too
       prev.filter((n) => n.conversation_id !== notificationId && n.comment_id !== notificationId)
     );
   };

@@ -26,12 +26,30 @@ graph TD
     end
 ```
 
-##  Premium Application Features
+### Chat Message Context-Aware Moderation Flow
+
+```mermaid
+graph TD
+    K[User sends Chat Message] --> L{Check Friendship}
+    L -->|Friends| M[Relaxed Toxicity Threshold 0.6-0.7]
+    L -->|Strangers| N[Strict Toxicity Threshold 0.4-0.5]
+    M --> O[Analyze Conversation History]
+    N --> O
+    O --> P{Toxicity Pattern?}
+    P -->|High History| Q[Flag as Bullying/Suppression]
+    P -->|Normal| R[Standard Toxicity Check]
+    Q --> S[Block Message + Warn Sender]
+    R --> S
+    S --> T[Send Warning Notification]
+```
+
+## Premium Application Features
 
 1.  **AI Moderation Engine (Important)**: Real-time detection of abusive, hate, and toxic speech using a hybrid pipeline of keyword checks and deep learning sequence classification.
-2.  **Real-Time WebSocket Notifications**: Integrated STOMP/WebSocket alerts that instantly notify users if a comment violates community guidelines (flashes a red Warning/AlertTriangle).
-3.  **Analytics & Toxicity Heatmap**: A visual admin layout charting the trends of flagged content, overall user toxicity ratings, and general community health metrics.
-4.  **Auto-Blur Detection Preview**: A simulated social media feed showing blurred toxic comments natively alongside clean posts.
+2.  **Context-Aware Chat Moderation**: Detects toxic messages in private chats with relationship-aware thresholds. Friends get relaxed thresholds (friendly teasing allowed), strangers get strict thresholds (bullying/harassment blocked).
+3.  **Real-Time WebSocket Notifications**: Integrated STOMP/WebSocket alerts that instantly notify users if a comment violates community guidelines (flashes a red Warning/AlertTriangle).
+4. **Analytics & Toxicity Heatmap**: A visual admin layout charting the trends of flagged content, overall user toxicity ratings, and general community health metrics.
+5. **Auto-Blur Detection Preview**: A simulated social media feed showing blurred toxic comments natively alongside clean posts.
 
 ## Quick Start
 
@@ -79,12 +97,32 @@ Moderation is performed asynchronously in the background.
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/comments/` | Creates a comment & Triggers Background ML Toxicity Task |
+| `POST` | `/chat/conversation` | Creates a conversation between two users |
+| `GET` | `/chat/conversations` | Retrieves user's conversation list |
+| `GET` | `/chat/messages/{conv_id}` | Retrieves messages for a conversation |
+| `WS` | `/ws/notifications` | WebSocket for real-time messaging and chat moderation |
 | `PATCH`| `/notifications/read-all` | Marks all moderation socket alerts as Read |
 | `POST` | `/posts/{id}/like` | Updates user interaction & handles post engagement |
 | `GET`  | `/posts/` | Feed data query with hydrated authors and comments count |
 | `GET`  | `/analytics/toxic-comments` | Chart metrics representing weekly flagged content trends |
 | `GET`  | `/notifications/` | Real-time fetch of user's personal alerts |
-| `WS`   | `/ws/notifications` | Upgrades connection to WebSocket for live pinging |
+
+### Chat Toxicity Warning Payload
+
+```json
+{
+  "type": "toxicity_warning",
+  "message": "Harassment detected. This behavior violates community guidelines.",
+  "original_content": "offensive message text",
+  "toxicity_score": 0.92,
+  "label": "suppression_pattern",
+  "context": {
+    "is_friend": false,
+    "conversation_toxicity": 0.7,
+    "friendship_modifier": 0.0
+  }
+}
+```
 
 ## Moderation payload Schema
 
@@ -101,6 +139,23 @@ Moderation is performed asynchronously in the background.
   "created_at": "2026-06-19T14:22:10Z"
 }
 ```
+
+## Context-Aware Moderation Logic
+
+The chat moderation system uses relationship-based thresholds:
+
+| Relationship | Threshold | Warning Message |
+|--------------|-----------|-----------------|
+| Friends | 0.6-0.7 | "Friendly teasing detected. Keep it respectful." |
+| Strangers | 0.4-0.5 | "Potentially harmful language detected." |
+| High toxicity pattern | - | "Harassment detected. This violates community guidelines." |
+
+### Conversation History Context
+
+The system analyzes the last 10 messages in a conversation:
+- **0-2 toxic messages**: Standard toxicity check
+- **3-4 toxic messages**: Label as "potential_bullying"
+- **5+ toxic messages**: Label as "suppression_pattern" (likely targeted harassment)
 
 ## Live WebSockets & Moderation Demo 
 
@@ -132,9 +187,10 @@ Covers: ML pipeline fallback testing, background task integration, WebSocket pay
 |------|----------|
 | `backend/model/*.safetensors` | Neural Network Weights |
 | `backend/model/config.json` | Tokenizer configuration and `id2label` mapping |
-| `backend/app/services/moderation_service.py` | Asynchronous ML inference and keyword filtering |
+| `backend/app/services/moderation_service.py` | Asynchronous ML inference, keyword filtering, and context-aware chat moderation |
 | `backend/app/database.py` | MongoDB connection & collections instance |
 | `backend/fix_data.py` | Custom Faker script resolving ID constraints |
+| `backend/app/routes/websockets.py` | WebSocket handlers with integrated toxicity moderation |
 
 **Never modify raw tensors under `backend/model/`.**
 
@@ -147,5 +203,8 @@ Covers: ML pipeline fallback testing, background task integration, WebSocket pay
 | Invalid Comment Data | Schema validation catches missing text/empty strings before it ever hits the HuggingFace Transformer |
 | UI Empty States | Empty suggestions/notifications render bespoke empty-state "Zero items" mockups gracefully |
 | Null Relational Data | Custom script (`fix_data`) injects strict `ObjectId` mapping to prevent `Unknown` user rendering |
+| Toxic Chat Message | Blocked before delivery. Sender receives warning notification instead. |
+| Friend vs Stranger Context | Different toxicity thresholds applied based on relationship status. |
+| Conversation Suppression Patterns | Repeated toxicity triggers bullying/suppression detection. |
 
 See [CHOICES.md](CHOICES.md) for architecture and decision rationale.

@@ -57,7 +57,7 @@ async def create_comment(
          raise HTTPException(status_code=400, detail="Invalid post ID")
 
     comment_dict = comment_in.model_dump()
-    comment_dict["user_id"] = current_user["_id"]
+    comment_dict["user_id"] = str(current_user["_id"])
     comment_dict["moderation_status"] = "pending"
     comment_dict["toxicity_score"] = None
     comment_dict["is_blurred"] = False
@@ -70,11 +70,13 @@ async def create_comment(
     background_tasks.add_task(run_moderation_task, comment_id, comment_in.text, current_user["_id"])
     
     created_comment = await comments_collection.find_one({"_id": comment_id})
+    created_comment["id"] = str(created_comment.pop("_id"))
     return created_comment
 
 @router.get("/post/{post_id}", response_model=List[CommentResponse])
 async def get_post_comments(post_id: str):
-    return await comments_collection.find({"post_id": post_id}).to_list(100)
+    comments = await comments_collection.find({"post_id": post_id}).to_list(100)
+    return [{**{k: v for k, v in c.items() if k != "_id"}, "id": str(c.get("_id"))} for c in comments]
 
 @router.delete("/{id}")
 async def delete_comment(id: str, current_user: dict = Depends(get_current_user)):
