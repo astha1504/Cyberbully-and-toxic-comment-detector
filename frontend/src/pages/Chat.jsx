@@ -88,6 +88,7 @@ const Chat = () => {
 
   const handleToxicityWarning = useCallback((data) => {
     setToxicityWarning(data);
+    setNewMessage(data.original_content || '');
     toast.error(data.message || 'Toxic message detected', {
       duration: 6000,
       position: 'top-center',
@@ -107,15 +108,23 @@ const Chat = () => {
     }
   };
 
-  const sendMessage = async (e) => {
-    e.preventDefault();
+  const sendMessage = async (e, forceSend = false) => {
+    if (e) e.preventDefault();
     if (!newMessage.trim() || !activeConv) return;
+    
+    // If there's an active toxicity warning and the user changed the text, we evaluate it normally again.
+    // If they hit 'Send Anyway', we pass ignore_warning to bypass the backend filter.
+    const isBypass = forceSend || (toxicityWarning && toxicityWarning.original_content === newMessage.trim());
+
     socket?.emit('send_message', {
       conversation_id: activeConv.id,
       sender_id: user.id,
       receiver_id: activeConv.user?.id,
       content: newMessage.trim(),
+      ignore_warning: isBypass, // Backend accepts this to bypass toxicity detection
     });
+    
+    if (toxicityWarning) setToxicityWarning(null);
     setNewMessage('');
     emitTyping(false);
   };
@@ -267,9 +276,25 @@ const filteredConversations = conversations.filter((conv) =>
              </div>
 
              {toxicityWarning && (
-               <div className="toxicity-warning-banner">
-                 <AlertTriangle size={16} className="warning-icon" />
-                 <span>{toxicityWarning.message}</span>
+               <div className="toxicity-warning-banner" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <AlertTriangle size={16} className="warning-icon" />
+                   <span>{toxicityWarning.message}</span>
+                 </div>
+                 <div style={{ display: 'flex', gap: '12px', paddingLeft: '24px' }}>
+                   <button 
+                     onClick={() => setToxicityWarning(null)} 
+                     style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.5)', color: 'white', borderRadius: '6px', padding: '6px 12px', fontSize: '13px', cursor: 'pointer' }}
+                   >
+                     Edit Message
+                   </button>
+                   <button 
+                     onClick={(e) => sendMessage(e, true)} 
+                     style={{ background: 'white', color: '#ff6b6b', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
+                   >
+                     Send Anyway
+                   </button>
+                 </div>
                </div>
              )}
 

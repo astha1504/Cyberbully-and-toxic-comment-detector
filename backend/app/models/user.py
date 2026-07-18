@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, BeforeValidator, PlainSerializer
-from typing import Optional, Annotated, Any
+from typing import Optional, Annotated, Any, List
 from bson import ObjectId
 
 # Custom type for handling MongoDB ObjectId in Pydantic V2
