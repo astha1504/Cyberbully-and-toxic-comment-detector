@@ -10,6 +10,9 @@ import json
 
 router = APIRouter(tags=["WebSockets"])
 
+# Cache to store bypassed warnings: (sender_id, receiver_id, content)
+_toxicity_warning_bypassed = set()
+
 async def get_user_from_token(token: str):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -50,23 +53,31 @@ async def websocket_endpoint(
                 sender_id = data.get("sender_id")
                 receiver_id = data.get("receiver_id")
                 content = data.get("content")
-                if not conversation_id or not sender_id or not content:
+                if not conversation_id or not sender_id or not receiver_id or not content:
                     continue
                 
-                moderation_result = await check_chat_toxicity(
-                    content, sender_id, receiver_id, conversation_id
-                )
-                
-                if moderation_result.get("is_toxic"):
-                    warning_msg = {
-                        "type": "toxicity_warning",
-                        "message": moderation_result.get("warning", "Toxic message detected"),
-                        "original_content": content,
-                        "toxicity_score": moderation_result.get("score"),
-                        "label": moderation_result.get("label"),
-                    }
-                    await manager.send_personal_message(warning_msg, sender_id)
-                    continue
+                # Feature 2: Friend check and toxicity detection
+                sender_doc = await users_collection.find_one({"_id": ObjectId(sender_id)})
+                is_friend = False
+                if sender_doc and "friends" in sender_doc:
+                    is_friend = receiver_id in sender_doc.get("friends", [])
+
+                ignore_warning = data.get("ignore_warning", False)
+
+                if not is_friend and not ignore_warning:
+                    moderation_result = await check_chat_toxicity(
+                        content, sender_id, receiver_id, conversation_id
+                    )
+                    if moderation_result.get("is_toxic"):
+                        warning_msg = {
+                            "type": "toxicity_warning",
+                            "message": "Warning: This message may contain abusive language. Please reconsider before sending.",
+                            "original_content": content,
+                            "toxicity_score": moderation_result.get("score"),
+                            "label": moderation_result.get("label"),
+                        }
+                        await manager.send_personal_message(warning_msg, sender_id)
+                        continue
                 
                 msg = {
                     "conversation_id": conversation_id,
@@ -78,16 +89,19 @@ async def websocket_endpoint(
                 }
                 result = await messages_collection.insert_one(msg)
                 msg["_id"] = result.inserted_id
+                
                 payload = {
                     "type": "new_message",
                     "id": str(result.inserted_id),
                     "conversation_id": conversation_id,
                     "sender_id": sender_id,
                     "content": content,
-                    "created_at": msg["created_at"].isoformat(),
+                    "created_at": msg["created_at"].isoformat() + "Z", # Fix frontend parsing correctly
                 }
+                
                 await manager.send_personal_message(payload, sender_id)
-                await manager.send_personal_message(payload, receiver_id)
+                if sender_id != receiver_id:
+                    await manager.send_personal_message(payload, receiver_id)
                 continue
 
             if event_type == "typing":
