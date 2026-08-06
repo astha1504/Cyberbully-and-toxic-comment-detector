@@ -1,7 +1,7 @@
 import os
 import json
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
 from ..config import settings
 from ..database import users_collection, messages_collection
 from datetime import datetime, timedelta
@@ -19,9 +19,14 @@ _model_available = True
 def _load_model():
     global _tokenizer, _model, _id2label, _model_available
     
-    # Check if weights exist
-    has_weights = os.path.exists(os.path.join(MODEL_PATH, 'pytorch_model.bin')) or \
-                  os.path.exists(os.path.join(MODEL_PATH, 'model.safetensors'))
+    weight_files = [
+        os.path.join(MODEL_PATH, 'pytorch_model.bin'),
+        os.path.join(MODEL_PATH, 'model.safetensors'),
+        os.path.join(MODEL_PATH, 'pytorch_model_quantized.bin')
+    ]
+    has_weights = any(os.path.exists(p) for p in weight_files)
+    quantized_path = os.path.join(MODEL_PATH, 'pytorch_model_quantized.bin')
+    use_quantized = os.path.exists(quantized_path)
     
     if not has_weights:
         print(f"Warning: Model weights not found at {MODEL_PATH}")
@@ -38,10 +43,19 @@ def _load_model():
             
     if _model is None:
         try:
-            _model = AutoModelForSequenceClassification.from_pretrained(
-                MODEL_PATH,
-                torch_dtype=torch.float32
-            )
+            if use_quantized:
+                config = AutoConfig.from_pretrained(MODEL_PATH)
+                _model = AutoModelForSequenceClassification.from_config(config)
+                _model = torch.quantization.quantize_dynamic(
+                    _model, {torch.nn.Linear}, dtype=torch.qint8
+                )
+                state_dict = torch.load(quantized_path, map_location="cpu")
+                _model.load_state_dict(state_dict, strict=False)
+            else:
+                _model = AutoModelForSequenceClassification.from_pretrained(
+                    MODEL_PATH,
+                    torch_dtype=torch.float32
+                )
             _model.eval()
         except Exception as e:
             print(f"Error loading model: {e}")
@@ -54,7 +68,7 @@ def _load_model():
                 config = json.load(f)
             _id2label = config.get('id2label', {})
         except Exception:
-            _id2label = {0: "non_offensive", 1: "abusive", 2: "hate_speech"}
+            _id2label = {0: "non_offensive", 1: "toxic"}
 
 async def check_toxicity(text: str):
     """
