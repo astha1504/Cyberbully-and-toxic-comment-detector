@@ -8,6 +8,7 @@ env/
 .env
 
 # Large model weights
+backend/model/
 backend/model/*.bin
 backend/model/*.safetensors
 backend/model/pytorch_model.bin
@@ -17,3 +18,6 @@ ml_models/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Dataset
+data/
