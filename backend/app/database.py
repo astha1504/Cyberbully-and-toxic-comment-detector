@@ -11,3 +11,4 @@ comments_collection = db.comments
 notifications_collection = db.notifications
 conversations_collection = db.conversations
 messages_collection = db.messages
+user_behaviour_collection = db.user_behaviour
