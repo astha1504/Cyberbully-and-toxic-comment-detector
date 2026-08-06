@@ -12,6 +12,7 @@ import Chat from './pages/Chat';
 import Explore from './pages/Explore';
 import Notifications from './pages/Notifications';
 import Analytics from './pages/Analytics';
+import UserBehaviour from './pages/UserBehaviour';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -120,6 +121,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <AppLayout>
               <Analytics />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/behaviour"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <UserBehaviour />
             </AppLayout>
           </ProtectedRoute>
         }

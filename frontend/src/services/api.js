@@ -67,7 +67,16 @@ export const getAnalyticsOverview = () => API.get('/analytics/overview');
 export const getToxicComments     = () => API.get('/analytics/toxic-comments');
 export const getToxicityTrend     = () => API.get('/analytics/toxicity-trend');
 
+// ── User Behaviour ─────────────────────────────────────────────────────────────
+export const getUserBehaviour    = () => API.get('/analytics/user-behaviour');
+export const recordViolation     = () => API.post('/analytics/record-violation');
+export const recordEdit          = () => API.post('/analytics/record-edit');
+
 // ── Toxicity ──────────────────────────────────────────────────────────────────
 export const checkToxicity = (text) => API.post('/toxicity/check', { text });
+
+// ── Moderation ─────────────────────────────────────────────────────────────────
+export const checkTextModeration = (text) => API.post('/api/moderation/check-text', { text });
+export const rewriteText = (text, tone = 'polite') => API.post('/api/moderation/rewrite', { text, tone });
 
 export default API;

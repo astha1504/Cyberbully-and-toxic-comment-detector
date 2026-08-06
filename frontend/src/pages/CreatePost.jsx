@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPost } from '../services/api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ImagePlus, X, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AIInterventionModal from '../components/AIInterventionModal';
+import RewriteSuggestion from '../components/RewriteSuggestion';
 import './CreatePost.css';
 
 const CreatePost = () => {
@@ -11,6 +13,8 @@ const CreatePost = () => {
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [pendingCaption, setPendingCaption] = useState('');
   const fileInputRef = useRef();
   const navigate = useNavigate();
 
@@ -35,21 +39,34 @@ const CreatePost = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!caption && images.length === 0) {
+  const openModal = () => {
+    if (!caption.trim() && images.length === 0) {
       toast.error('Add a caption or image');
       return;
     }
+    setPendingCaption(caption);
+    setShowModal(true);
+  };
+
+  const handleSubmitFromModal = async (finalCaption) => {
     setLoading(true);
     try {
-      await createPost({ caption, images });
+      await createPost({ caption: finalCaption, images });
       toast.success('Post created!');
+      setCaption('');
+      setImages([]);
+      setPreviews([]);
       navigate('/');
     } catch (err) {
       toast.error('Failed to create post');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleEditFromModal = (editedCaption) => {
+    setCaption(editedCaption);
+    setShowModal(false);
   };
 
   return (
@@ -62,7 +79,7 @@ const CreatePost = () => {
       >
         <h2 className="create-title">Create New Post</h2>
 
-        <form className="create-form" onSubmit={handleSubmit} id="create-post-form">
+        <form className="create-form" id="create-post-form">
           {/* Image Upload Area */}
           <div
             className={`upload-area ${previews.length > 0 ? 'has-images' : ''}`}
@@ -119,11 +136,12 @@ const CreatePost = () => {
           />
 
           <motion.button
-            type="submit"
+            type="button"
             className="create-btn"
             disabled={loading}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
+            onClick={openModal}
             id="create-post-submit"
           >
             {loading ? (
@@ -136,6 +154,16 @@ const CreatePost = () => {
             )}
           </motion.button>
         </form>
+
+        <AIInterventionModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onConfirm={handleSubmitFromModal}
+          onEdit={handleEditFromModal}
+          text={pendingCaption}
+          title="Create Post"
+          placeholder="What's on your mind?"
+        />
       </motion.div>
     </div>
   );

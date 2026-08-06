@@ -10,6 +10,7 @@ import {
   Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile, AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AIInterventionModal from '../components/AIInterventionModal';
 import './Chat.css';
 
 const DEFAULT_AVATAR = '/placeholder-avatar.svg';
@@ -29,6 +30,8 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [toxicityWarning, setToxicityWarning] = useState(null);
+  const [showIntervention, setShowIntervention] = useState(false);
+  const [interventionText, setInterventionText] = useState('');
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -112,16 +115,18 @@ const Chat = () => {
     if (e) e.preventDefault();
     if (!newMessage.trim() || !activeConv) return;
     
-    // If there's an active toxicity warning and the user changed the text, we evaluate it normally again.
-    // If they hit 'Send Anyway', we pass ignore_warning to bypass the backend filter.
-    const isBypass = forceSend || (toxicityWarning && toxicityWarning.original_content === newMessage.trim());
-
+    if (!forceSend) {
+      setInterventionText(newMessage.trim());
+      setShowIntervention(true);
+      return;
+    }
+    
     socket?.emit('send_message', {
       conversation_id: activeConv.id,
       sender_id: user.id,
       receiver_id: activeConv.user?.id,
       content: newMessage.trim(),
-      ignore_warning: isBypass, // Backend accepts this to bypass toxicity detection
+      ignore_warning: true,
     });
     
     if (toxicityWarning) setToxicityWarning(null);
@@ -352,6 +357,19 @@ const filteredConversations = conversations.filter((conv) =>
             <p>Select a conversation or search for someone to chat with</p>
           </div>
         )}
+
+        <AIInterventionModal
+          isOpen={showIntervention}
+          onClose={() => setShowIntervention(false)}
+          onConfirm={() => sendMessage(null, true)}
+          onEdit={(text) => {
+            setNewMessage(text);
+            setShowIntervention(false);
+          }}
+          text={interventionText}
+          title="Send Message"
+          placeholder="Type a message..."
+        />
       </div>
     </div>
   );

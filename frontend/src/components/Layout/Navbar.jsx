@@ -5,7 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useSocket } from '../../context/SocketContext';
 import {
   Home, PlusSquare, Bell, MessageCircle,
-  User, LogOut, Sun, Moon, Compass, BarChart2
+  User, LogOut, Sun, Moon, Compass, BarChart2, Activity
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -31,6 +31,7 @@ const Navbar = () => {
     { path: '/notifications',       icon: Bell,         label: 'Notifications', badge: unreadCount },
     { path: '/chat',                icon: MessageCircle,label: 'Messages' },
     { path: '/analytics',           icon: BarChart2,    label: 'Analytics' },
+    { path: '/behaviour',           icon: Activity,     label: 'Behaviour' },
     { path: `/profile/${user?.id}`, icon: User,         label: 'Profile' },
   ];
 
