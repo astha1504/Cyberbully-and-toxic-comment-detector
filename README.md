@@ -54,19 +54,30 @@ graph TD
 ## Quick Start
 
 ```bash
-# 1. Clone and install backend dependencies
-cd backend && pip install -r requirements.txt
+# 1. Clone and enter the project
+git clone https://github.com/astha1504/Cyberbully-and-toxic-comment-detector.git
+cd Cyberbully-and-toxic-comment-detector
 
-# 2. Add sample social media dummy data (50 users, 100 posts)
-python fix_data.py
+# 2. Create and activate Python virtual environment
+cd backend
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-# 3. Start the FastAPI backend
+# 3. Install backend dependencies
+pip install -r requirements.txt
+
+# 4. Start the FastAPI backend
 uvicorn app.main:app --reload --port 8000
 
-# 4. Start the React frontend 
-cd ../frontend && npm install && npm run dev
+# 5. In a new terminal, install frontend dependencies and start dev server
+cd ../frontend
+npm install
+npm run dev
 
-# 5. Access the Local App
+# 6. Access the Local App
 # Open http://localhost:5173
 ```
 
@@ -79,18 +90,7 @@ cd ../frontend && npm install && npm run dev
 
 Place your PyTorch/Safetensors moderation weights under `backend/model/`. If no weights are found, the system intelligently defaults to standard baseline fallback configurations.
 
-Then run:
-
-```bash
-# Seed the backend with fresh valid users and dummy posts
-cd backend
-python fix_data.py
-
-# Or if you just want unstructured dummy generation:
-python generate_data.py
-```
-
-Moderation is performed asynchronously in the background.
+Note: `backend/model/` is gitignored because model weights are large files. After cloning, add your trained model files to that directory manually.
 
 ## API Endpoints
 
