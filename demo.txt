@@ -8,7 +8,17 @@ App: Pehra, AI-assisted cyberbullying prevention and India-first cyber safety pl
 
 DEMO GOAL
 
-Show one clear path from writing a post to receiving a safety check, editing harmful wording, and tracking repeated violations. Then show chat, image OCR, voice transcription, notifications, and analytics during the full rehearsal.
+Start on Pehra's public landing page. Show the Pehra Safety Loop and its India-focused scam guidance. Then demonstrate safer posting, explainable scam checks, chat, image OCR, voice transcription, repeat-offender controls, private case follow-up, and consistent light and dark themes.
+
+LANDING PAGE AND BRAND CHECK
+
+1. Sign out or open http://localhost:5173 in a private browser window.
+2. Confirm the Pehra logo, forest and teal palette, headline, and Join Pehra and Sign in links appear.
+3. Select How Pehra works and Get help. Confirm each link scrolls to the right section.
+4. Point to the sample e-Challan cues and the message saying the example is not a live scan. Explain results are warnings, not proof.
+5. Check the links for 1930, the National Cyber Crime Reporting Portal, and Chakshu. Confirm each points to the official service.
+6. Open Sign in and Join Pehra. Confirm both routes load. Return to the landing page before the live demo.
+7. Resize the browser to a phone-width window. Check the logo, calls to action, sample message, and sections fit without overlap.
 
 ONE-SENTENCE INTRO
 
@@ -242,10 +252,10 @@ Create an OCR image in Paint. Use a plain white background, large dark letters, 
 
 8-MINUTE LIVE DEMO FLOW
 
-0:00 to 0:25. Open Home and introduce the problem.
-Say: "Pehra adds a safety check before a harmful post reaches the community. The platform also helps teams review chat behavior and repeated violations."
+0:00 to 0:30. Open Pehra's public landing page and introduce the USP.
+Say: "Pehra connects prevention, explainable scam checks, and practical next steps for student communities. Our Safety Loop helps people pause, understand, respond, and connect to the right support."
 
-0:25 to 1:20. Show the pre-post safety check.
+0:30 to 1:20. Show the pre-post safety check.
 Open Create. Paste the safety-check text and select Share Post. Show the matched wording, score, and insult, harassment, and threat signals. Select Edit Message. Replace the wording with the kind rewrite. Submit the respectful version.
 
 1:20 to 2:00. Show image OCR.
@@ -254,22 +264,30 @@ Open Create again. Upload the prepared PNG or JPEG. Add a neutral caption. Selec
 2:00 to 3:00. Show the India-first cyber safety scan.
 Open Safety. Paste the cyber scam scanner text. Show the APK, link, and official identity signals. Explain that Pehra does not open the URL and a no-match result does not prove safety. Select "Money has left my account" only when showing the urgent 1930 response. Open an official reporting link.
 
-3:00 to 4:15. Show messaging.
+3:00 to 4:10. Show messaging.
 From the community_demo profile, select Message. Send the safe chat message. Confirm its arrival in the second browser without refreshing. Send the toxic chat test from community_demo. Show the warning, then choose Edit Message and send the kind rewrite.
 
-4:15 to 5:25. Show repeat-offender tracking.
+4:10 to 5:10. Show repeat-offender tracking.
 Before the event, use pattern_demo to record two toxic post or comment findings. Confirm the Behaviour page shows two warnings. During the live demo, record the third finding. Refresh Behaviour and show the 24-hour mute banner. Try one more post to show the blocked action. Run this step last for pattern_demo.
 
-5:25 to 6:10. Show Notifications and Analytics.
-Open Notifications and show the moderation alert. Open Analytics and refresh. Explain the totals refer to comments and update after background moderation finishes.
+5:10 to 5:50. Show Notifications, Analytics, and theme consistency.
+Open Notifications and show the moderation alert. Open Analytics and refresh. Explain the totals refer to comments and update after background moderation finishes. Toggle light and dark mode. Point out the matching forest, teal, and sage palette, readable primary actions, and distinct red and amber safety alerts.
 
-6:10 to 7:00. Show the Safety Center reporting paths and case workflow.
+5:50 to 7:00. Show the Safety Center reporting paths and case workflow.
 Open Chakshu and point to the official NCRP link. Prepare a factual report preview, consent to share it with Pehra, submit it, then add the prepared fake e-Challan screenshot as private evidence. Open the moderator queue, review the evidence and action history, then mark the case under review. Explain Pehra does not submit a complaint automatically or connect to Pratibimb.
 
 7:00 to 8:00. Close with scope and next step.
 Say: "Pehra helps people pause before harmful posts, checks suspicious messages for explainable signals, and guides users to official Indian reporting channels. Our next step is a measured pilot with students and safety reviewers."
 
 FULL REHEARSAL CHECKLIST
+
+LANDING PAGE AND VISUAL THEME
+1. Open the signed-out landing page and complete the Landing Page and Brand Check above.
+2. Sign in and use the theme toggle. Confirm the choice persists after a page reload.
+3. Check Home, Create Post and its warning modal, Profile, Messages, Notifications, Safety Center, Behaviour, and Analytics in both themes.
+4. If the demo account has moderator access, check the moderator queue in both themes too.
+5. Confirm cards, fields, borders, links, icons, and primary buttons use the Pehra green and teal palette. Check button labels remain readable in dark mode.
+6. Confirm safety warnings remain red or amber and success states remain green. Check the landing page and app at laptop and phone widths.
 
 AUTHENTICATION
 1. Register each demo account.

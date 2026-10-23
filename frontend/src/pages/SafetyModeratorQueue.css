@@ -2,7 +2,7 @@
 .moderator-page-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 17px; color: var(--text-secondary); font-size: 10px; }
 .moderator-page-top a, .moderator-page-top span { display: inline-flex; align-items: center; gap: 6px; }
 .moderator-page-top a { color: var(--primary); font-weight: 700; }
-.moderator-hero { display: flex; align-items: center; gap: 15px; padding: 22px; border-radius: 17px; color: #fff; background: linear-gradient(115deg, #10233a, #126c72); }
+.moderator-hero { display: flex; align-items: center; gap: 15px; padding: 22px; border-radius: 17px; color: #fff; background: linear-gradient(115deg, #122c27, #286a5d); }
 .moderator-hero-icon { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 14px; color: #9aebd9; background: rgba(255,255,255,.13); }
 .moderator-hero span { color: #a8ecdd; font-size: 9px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .moderator-hero h1 { margin-top: 2px; font: 700 25px/1.2 Outfit, Inter, sans-serif; }
@@ -40,12 +40,12 @@
 .moderator-case-card footer { display: flex; gap: 7px; margin-top: 12px; }
 .moderator-case-card footer button { padding: 8px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; }
 .moderator-case-card footer button:disabled { cursor: wait; opacity: .5; }
-.case-action-review { color: #486183; background: #e8eef7; }
+.case-action-review { color: #3f6657; background: #e5eee4; }
 .case-action-resolve { color: #fff; background: #4e765d; }
 .case-action-close { color: var(--text-secondary); border: 1px solid var(--border); background: transparent; }
 [data-theme='dark'] .moderator-error { color: #ffb7aa; background: #392421; }
 [data-theme='dark'] .moderator-success { color: #b8dfc2; background: #25362b; }
-[data-theme='dark'] .case-action-review { color: #bfd0e8; background: #2c394c; }
+[data-theme='dark'] .case-action-review { color: #c1dfc8; background: #2c4037; }
 @media (max-width: 700px) {
   .moderator-page { padding: 17px 14px 45px; }
   .moderator-hero { align-items: flex-start; flex-wrap: wrap; padding: 17px; }

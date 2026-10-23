@@ -14,12 +14,12 @@ import toast from 'react-hot-toast';
 import './Analytics.css';
 
 const COLORS = {
-  primary:   '#2563EB',
-  accent:    '#14B8A6',
-  secondary: '#0F766E',
-  safe:      '#0F9F79',
-  toxic:     '#DC4C4C',
-  muted:     '#64748B',
+  primary:   'var(--primary)',
+  accent:    'var(--accent)',
+  secondary: 'var(--secondary)',
+  safe:      'var(--success)',
+  toxic:     'var(--error)',
+  muted:     'var(--muted)',
 };
 
 /* ─── Stat Card ───────────────────────────────────────────────────────── */
@@ -30,7 +30,7 @@ const StatCard = ({ icon: Icon, label, value, sub, color, delay = 0 }) => (
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
   >
-    <div className="stat-icon-wrap" style={{ background: `${color}18` }}>
+    <div className="stat-icon-wrap" style={{ background: `color-mix(in srgb, ${color} 14%, transparent)` }}>
       <Icon size={22} color={color} />
     </div>
     <div className="stat-info">

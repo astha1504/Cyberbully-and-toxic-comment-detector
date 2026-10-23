@@ -37,7 +37,7 @@
 .cyber-installed-check p { margin-top: 4px; }
 .cyber-installed-check a { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; color: var(--primary); font-weight: 700; }
 .cyber-scan-actions { display: flex; align-items: center; gap: 12px; margin-top: 15px; }
-.cyber-scan-submit { min-height: 41px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 15px; border-radius: 10px; color: #fff; background: var(--primary); font-size: 11px; font-weight: 700; }
+.cyber-scan-submit { min-height: 41px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 15px; border-radius: 10px; color: var(--on-primary); background: var(--primary); font-size: 11px; font-weight: 700; }
 .cyber-scan-submit:hover:not(:disabled) { background: var(--primary-h); transform: translateY(-1px); }
 .cyber-scan-submit:disabled { cursor: wait; opacity: .75; }
 .cyber-scan-actions > span { color: var(--text-secondary); font-size: 10px; }

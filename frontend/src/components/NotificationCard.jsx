@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 import './NotificationCard.css';
 
 const iconMap = {
-  like:    { Icon: Heart,         color: '#2563EB' },
-  comment: { Icon: MessageCircle, color: '#0F9F79' },
-  follow:  { Icon: UserPlus,      color: '#7C62D6' },
+  like:    { Icon: Heart,         color: '#286A5D' },
+  comment: { Icon: MessageCircle, color: '#287252' },
+  follow:  { Icon: UserPlus,      color: '#527D6B' },
   MODERATION_ALERT: { Icon: AlertTriangle, color: '#FF3B30' },
   default: { Icon: Bell,          color: '#6B7280' },
 };

@@ -84,9 +84,9 @@ const UserBehaviour = () => {
   const statCards = [
     { label: 'Warnings', value: behaviour?.warning_count || 0, icon: AlertTriangle, color: '#f59e0b' },
     { label: 'Toxic Attempts', value: behaviour?.toxic_comments || 0, icon: UserX, color: '#ef4444' },
-    { label: 'Edited Comments', value: behaviour?.edited_comments || 0, icon: Edit3, color: '#3b82f6' },
-    { label: 'Risk Score', value: behaviour?.risk_score ?? 0, icon: Activity, color: '#8b5cf6' },
-    { label: 'Safety Rate', value: `${safeRate}%`, icon: Shield, color: '#10b981' },
+    { label: 'Edited Comments', value: behaviour?.edited_comments || 0, icon: Edit3, color: '#286a5d' },
+    { label: 'Risk Score', value: behaviour?.risk_score ?? 0, icon: Activity, color: '#527d6b' },
+    { label: 'Safety Rate', value: `${safeRate}%`, icon: Shield, color: '#287252' },
   ];
 
   return (

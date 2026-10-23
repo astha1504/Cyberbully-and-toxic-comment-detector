@@ -5,13 +5,13 @@ export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
 
 // Design Tokens (mirrored from CSS for JS use)
 export const COLORS = {
-  background: '#F3F6FB',
-  card: '#FFFFFF',
-  primary: '#2563EB',
-  accent: '#14B8A6',
-  secondary: '#0F766E',
-  text: '#122033',
-  muted: '#64748B',
+  background: '#F3F1E9',
+  card: '#FFFEFA',
+  primary: '#183E3A',
+  accent: '#78A98A',
+  secondary: '#286A5D',
+  text: '#19303A',
+  muted: '#63716F',
 };
 
 // App constants

@@ -233,7 +233,7 @@
 .modal-footer .btn-edit:hover:not(:disabled) { background: color-mix(in srgb, var(--warning) 18%, var(--surface)); }
 .modal-footer .btn-post-anyway { color: var(--error); background: color-mix(in srgb, var(--error) 10%, var(--surface)); border-color: color-mix(in srgb, var(--error) 24%, var(--border)); }
 .modal-footer .btn-post-anyway:hover:not(:disabled) { background: color-mix(in srgb, var(--error) 17%, var(--surface)); }
-.modal-footer .btn-primary { color: #fff; background: var(--primary); border-color: var(--primary); }
+.modal-footer .btn-primary { color: var(--on-primary); background: var(--primary); border-color: var(--primary); }
 .modal-footer .btn-primary:hover:not(:disabled) { background: var(--primary-h); border-color: var(--primary-h); }
 
 .modal-close:focus-visible,
