@@ -129,7 +129,7 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="analytics-page">
+      <div className="app-page-shell analytics-page">
         <div className="analytics-loading">
           <div className="spinner" />
           <p>Loading analytics…</p>
@@ -139,7 +139,7 @@ const Analytics = () => {
   }
 
   return (
-    <div className="analytics-page">
+    <div className="app-page-shell analytics-page">
       {/* ── Page Header ─────────────────────────────────────────────── */}
       <motion.div
         className="analytics-header"

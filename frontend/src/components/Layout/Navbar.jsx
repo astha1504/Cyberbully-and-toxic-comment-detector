@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Activity, BarChart3, Bell, ChevronDown, Compass, Home, LogOut,
-  MessageCircle, Moon, Plus, ShieldCheck, Sun, User
+  Activity, ArrowUpRight, BarChart3, Bell, ChevronDown, ClipboardList, Compass,
+  FileText, Home, LifeBuoy, LogOut, MessageCircle,
+  Moon, Plus, ShieldCheck, Sun, User
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,15 +17,30 @@ const NAV_ITEMS = [
   { path: '/create', icon: Plus, label: 'Create post', section: 'Community', emphasis: true },
   { path: '/chat', icon: MessageCircle, label: 'Messages', section: 'Community' },
   { path: '/notifications', icon: Bell, label: 'Notifications', section: 'Community' },
-  { path: '/safety', icon: ShieldCheck, label: 'Safety center', section: 'Safety & insights' },
-  { path: '/behaviour', icon: Activity, label: 'My behaviour', section: 'Safety & insights' },
-  { path: '/analytics', icon: BarChart3, label: 'Analytics', section: 'Safety & insights' },
+  { path: '/behaviour', icon: Activity, label: 'My behaviour', section: 'Insights' },
+  { path: '/analytics', icon: BarChart3, label: 'Analytics', section: 'Insights' },
 ];
 
-const MOBILE_ITEMS = ['/', '/explore', '/create', '/chat', '/safety'];
+const SAFETY_ITEMS = [
+  { path: '/safety/scan', icon: ShieldCheck, label: 'Scan a message' },
+  { path: '/safety/help', icon: LifeBuoy, label: 'Get help' },
+  { path: '/safety/report', icon: FileText, label: 'Prepare a report' },
+  { path: '/safety/reports', icon: ClipboardList, label: 'My reports' },
+];
+
+const MOBILE_ITEMS = [
+  { path: '/', icon: Home, label: 'Home' },
+  { path: '/explore', icon: Compass, label: 'Explore' },
+  { path: '/create', icon: Plus, label: 'Create post' },
+  { path: '/chat', icon: MessageCircle, label: 'Messages' },
+  { path: '/safety/scan', icon: ShieldCheck, label: 'Safety', safetyRoot: true },
+];
 
 const getPageName = (pathname) => {
-  if (pathname.startsWith('/safety')) return 'Safety center';
+  if (pathname === '/safety/moderation') return 'Safety moderation queue';
+  const safetyPage = SAFETY_ITEMS.find((item) => item.path === pathname);
+  if (safetyPage) return safetyPage.label;
+  if (pathname.startsWith('/safety')) return 'Safety Center';
   if (pathname.startsWith('/profile')) return 'Your profile';
   return NAV_ITEMS.find((item) => item.path === pathname)?.label || 'Community';
 };
@@ -49,8 +65,10 @@ const Navbar = () => {
   const currentPage = getPageName(location.pathname);
   const profilePath = `/profile/${user?.id}`;
 
-  const isActive = (item) => item.path === '/safety'
+  const isActive = (item) => item.safetyRoot
     ? location.pathname.startsWith('/safety')
+    : item.path.startsWith('/safety/')
+      ? location.pathname === item.path || (item.path === '/safety/reports' && location.pathname === '/safety/moderation')
     : item.path === '/profile'
       ? location.pathname.startsWith('/profile')
       : location.pathname === item.path;
@@ -70,8 +88,8 @@ const Navbar = () => {
         className={`${mobile ? 'mobile-nav-link' : 'nav-link'}${active ? ' active' : ''}${item.emphasis ? ' nav-link-emphasis' : ''}`}
         id={!mobile ? `nav-${item.label.toLowerCase().replaceAll(' ', '-')}` : undefined}
         aria-current={active ? 'page' : undefined}
-        aria-label={mobile ? item.label : undefined}
-        title={mobile ? item.label : undefined}
+        aria-label={item.label}
+        title={item.label}
         onClick={() => mobile && setMobileOpen(false)}
       >
         <span className={mobile ? 'mobile-icon-wrapper' : 'nav-icon-wrapper'}>
@@ -91,14 +109,20 @@ const Navbar = () => {
         </Link>
 
         <div className="navbar-scroll-area">
-          {['Community', 'Safety & insights'].map((section) => (
+          {['Community', 'Safety Center', 'Insights'].map((section) => (
             <section className="navbar-section" key={section}>
               <h2 className="nav-section-title">{section}</h2>
-              <ul className="navbar-links">
-                {NAV_ITEMS.filter((item) => item.section === section).map((item) => (
-                  <li key={item.path}>{renderLink(item)}</li>
-                ))}
-              </ul>
+              {section === 'Safety Center' ? (
+                <ul className="navbar-links navbar-safety-links">
+                  {SAFETY_ITEMS.map((item) => <li key={item.path}>{renderLink(item)}</li>)}
+                </ul>
+              ) : (
+                <ul className="navbar-links">
+                  {NAV_ITEMS.filter((item) => item.section === section).map((item) => (
+                    <li key={item.path}>{renderLink(item)}</li>
+                  ))}
+                </ul>
+              )}
             </section>
           ))}
         </div>
@@ -107,7 +131,7 @@ const Navbar = () => {
           <span className="sidebar-safety-icon"><ShieldCheck size={17} /></span>
           <strong>Something feel off?</strong>
           <p>Check a suspicious message before you respond.</p>
-          <Link to="/safety">Open safety center <span aria-hidden="true">↗</span></Link>
+          <Link to="/safety/scan">Open safety center <ArrowUpRight size={12} aria-hidden="true" /></Link>
         </div>
 
         <div className="navbar-bottom">
@@ -135,7 +159,7 @@ const Navbar = () => {
           <span className="topbar-title">{currentPage}</span>
         </div>
         <div className="topbar-actions">
-          <Link className="topbar-scan-link" to="/safety"><ShieldCheck size={17} /><span>Scan a message</span></Link>
+          <Link className="topbar-scan-link" to="/safety/scan"><ShieldCheck size={17} /><span>Scan a message</span></Link>
           <button className="topbar-theme-button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
@@ -144,8 +168,7 @@ const Navbar = () => {
       </header>
 
       <nav className="navbar-mobile" id="mobile-navbar" aria-label="Mobile navigation">
-        {MOBILE_ITEMS.map((path) => {
-          const item = path === '/profile' ? { path, icon: User, label: 'Profile' } : NAV_ITEMS.find((candidate) => candidate.path === path);
+        {MOBILE_ITEMS.map((item) => {
           return renderLink(item, true);
         })}
         <button className={`mobile-nav-link mobile-more-button${mobileOpen ? ' active' : ''}`} type="button" onClick={() => setMobileOpen((open) => !open)} aria-expanded={mobileOpen} aria-label="More navigation">
@@ -157,6 +180,7 @@ const Navbar = () => {
         <div className="mobile-more-menu" role="dialog" aria-label="More navigation options">
           {[
             ...NAV_ITEMS.filter((item) => ['/notifications', '/behaviour', '/analytics'].includes(item.path)),
+            ...SAFETY_ITEMS,
             { path: '/profile', icon: User, label: 'Profile' },
           ].map((item) => <div key={item.path}>{renderLink(item, true)}</div>)}
           <button className="mobile-menu-action" onClick={toggleTheme}>{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}{theme === 'light' ? 'Dark mode' : 'Light mode'}</button>

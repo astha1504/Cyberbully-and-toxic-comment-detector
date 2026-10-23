@@ -89,7 +89,7 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="create-page">
+    <div className="app-page-shell create-page">
       <motion.div
         className="create-container"
         initial={{ opacity: 0, y: 20 }}

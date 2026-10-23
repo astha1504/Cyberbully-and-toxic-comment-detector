@@ -1,4 +1,5 @@
-.home-page { width: min(1280px, 100%); margin: 0 auto; padding: 28px 32px 70px; animation: fadeIn .3s ease both; }
+.home-page { animation: fadeIn .3s ease both; }
+.home-page > * { max-width: var(--app-content-max-width); margin-inline: auto; }
 .home-welcome { position: relative; display: flex; min-height: 190px; align-items: center; justify-content: space-between; gap: 25px; overflow: hidden; padding: 30px 34px; border: 1px solid rgba(var(--primary-rgb), .14); border-radius: 22px; background: linear-gradient(118deg, var(--surface) 0%, rgba(var(--primary-rgb), .065) 58%, rgba(var(--primary-rgb), .11) 100%); box-shadow: var(--shadow-sm); }
 .home-welcome-copy, .home-welcome-actions { position: relative; z-index: 2; }
 .home-welcome-copy { max-width: 610px; }
@@ -21,15 +22,15 @@
 .home-safety-copy strong { font-size: 11px; font-weight: 750; }
 .home-safety-copy small { color: var(--muted); font-size: 10px; }
 .home-safety-strip > svg { color: var(--primary); }
-.home-feed-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 15px; margin-bottom: 13px; }
+.home-feed-layout { display: grid; grid-template-columns: minmax(0, 1fr) 286px; grid-template-rows: auto auto; align-items: start; gap: 14px 24px; }
+.home-feed-title { grid-column: 1; grid-row: 1; align-self: end; }
 .home-section-kicker { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .14em; }
-.home-feed-title-row h2 { margin: 3px 0 0; font-size: 19px; font-weight: 750; letter-spacing: -.035em; }
-.home-feed-create { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--primary); background: var(--surface); font-size: 10px; font-weight: 750; }
+.home-feed-title h2 { margin: 3px 0 0; font-size: 19px; font-weight: 750; letter-spacing: -.035em; }
+.home-feed-create { grid-column: 2; grid-row: 1; justify-self: end; align-self: end; display: inline-flex; min-height: 36px; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 9px; color: var(--primary); background: var(--surface); font-size: 10px; font-weight: 750; transition: var(--transition); }
 .home-feed-create:hover { border-color: var(--primary); }
 
-.feed-container { display: flex; max-width: 1120px; align-items: flex-start; gap: 24px; margin: 0 auto; }
-.feed-main { flex: 1; max-width: 720px; min-width: 0; }
-.feed-sidebar { position: sticky; top: 94px; width: 286px; flex: 0 0 286px; }
+.feed-main { grid-column: 1; grid-row: 2; min-width: 0; width: 100%; }
+.feed-sidebar { grid-column: 2; grid-row: 2; position: sticky; top: 94px; min-width: 0; width: 100%; }
 .sidebar-user { margin-bottom: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow-sm); }
 .sidebar-user-info { display: flex; align-items: center; gap: 11px; }
 .sidebar-avatar { width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 50%; object-fit: cover; }
@@ -57,11 +58,10 @@
 
 @media (max-width: 1050px) {
   .feed-sidebar { display: none; }
-  .feed-main { max-width: 760px; margin: 0 auto; }
-  .feed-container { display: block; }
+  .home-feed-layout { grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; }
+  .feed-main { grid-column: 1 / -1; grid-row: 2; }
 }
 @media (max-width: 760px) {
-  .home-page { padding: 18px 14px 34px; }
   .home-welcome { min-height: auto; align-items: flex-start; flex-direction: column; gap: 18px; padding: 22px 18px; border-radius: 17px; }
   .home-welcome h1 { font-size: 27px; }
   .home-welcome-actions { width: 100%; grid-template-columns: 1fr 1fr; }
@@ -70,8 +70,7 @@
   .home-welcome-orb-two { right: -22%; }
   .home-safety-strip { margin: 12px 0 23px; }
   .home-safety-copy small { max-width: 235px; line-height: 1.4; }
-  .home-feed-title-row { margin-bottom: 10px; }
-  .home-feed-title-row h2 { font-size: 17px; }
-  .feed-container { margin: 0 -14px; }
-  .feed-main { max-width: none; }
+  .home-feed-layout { gap: 10px 12px; }
+  .home-feed-title h2 { font-size: 17px; }
+  .home-feed-create { min-height: 33px; padding: 7px 9px; }
 }

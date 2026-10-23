@@ -1,9 +1,6 @@
-.profile-page {
-  padding: 32px 20px 80px;
-}
-
 .profile-container {
-  max-width: 780px;
+  width: 100%;
+  max-width: var(--app-content-max-width);
   margin: 0 auto;
 }
 
@@ -198,6 +195,7 @@
 }
 
 .tab {
+  appearance: none;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -209,13 +207,14 @@
   font-family: inherit;
   text-transform: uppercase;
   letter-spacing: 1px;
+  border: 0;
   border-top: 1px solid transparent;
   margin-top: -1px;
 }
 
 .tab.active {
   color: var(--text-primary);
-  border-top-color: var(--text-primary);
+  border-top-color: var(--primary);
 }
 
 /* Posts Grid */

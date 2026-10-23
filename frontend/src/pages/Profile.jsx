@@ -8,7 +8,7 @@ import {
 import PostCard from '../components/Post/PostCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Settings, Camera, UserPlus, UserMinus, Grid, MessageCircle, X, Check, Edit3
+  Settings, Camera, UserPlus, UserMinus, Grid, MessageCircle, X, Check, Edit3, Heart
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Profile.css';
@@ -157,7 +157,7 @@ const Profile = () => {
 
   if (profileError) {
     return (
-      <div className="profile-page">
+      <div className="app-page-shell profile-page">
         <div className="profile-load-error" role="alert">
           <p>{profileError}</p>
           <button className="edit-profile-btn" onClick={fetchProfile}>Try again</button>
@@ -167,7 +167,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="profile-page">
+    <div className="app-page-shell profile-page">
       <motion.div
         className="profile-container"
         initial={{ opacity: 0 }}
@@ -269,7 +269,7 @@ const Profile = () => {
 
         {posts.length === 0 ? (
           <div className="no-posts">
-            <div className="no-posts-icon">📷</div>
+            <div className="no-posts-icon"><Camera size={34} strokeWidth={1.6} /></div>
             <h3>{isOwn ? 'Share your first post' : 'No posts yet'}</h3>
           </div>
         ) : (
@@ -289,7 +289,7 @@ const Profile = () => {
                   </div>
                 )}
                 <div className="grid-post-overlay">
-                  <span>❤️ {post.likes_count || 0}</span>
+                  <span><Heart size={14} fill="currentColor" aria-hidden="true" /> {post.likes_count || 0}</span>
                 </div>
               </motion.div>
             ))}

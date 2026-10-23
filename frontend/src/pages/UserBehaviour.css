@@ -1,8 +1,4 @@
-.behaviour-page {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
+.behaviour-page > * { max-width: var(--app-content-max-width); margin-inline: auto; }
 
 .behaviour-loading {
   display: flex;
@@ -35,6 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
@@ -174,4 +171,15 @@
   color: #f6d88f;
   background: #382d1b;
   border-color: #6a5227;
+}
+
+@media (max-width: 560px) {
+  .behaviour-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .behaviour-refresh-btn {
+    align-self: flex-start;
+  }
 }

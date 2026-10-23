@@ -94,8 +94,8 @@ const SafetyModeratorQueue = () => {
   };
 
   return (
-    <div className="moderator-page">
-      <div className="moderator-page-top"><Link to="/safety"><ArrowLeft size={15} /> Safety Center</Link><span><ShieldCheck size={15} /> Restricted moderator view</span></div>
+    <div className="app-page-shell moderator-page">
+      <div className="moderator-page-top"><Link to="/safety/reports"><ArrowLeft size={15} /> My safety reports</Link><span><ShieldCheck size={15} /> Restricted moderator view</span></div>
       <section className="moderator-hero">
         <div className="moderator-hero-icon"><FileSearch size={24} /></div>
         <div><span>Private case management</span><h1>Safety review queue</h1><p>Review reports submitted to the Pehra safety team. Case data expires after 30 days.</p></div>

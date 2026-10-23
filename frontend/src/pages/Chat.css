@@ -1,6 +1,7 @@
 .chat-page {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   background: var(--bg-light);
   overflow: hidden;
 }
@@ -20,7 +21,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 20px 8px;
+  padding: 20px var(--app-panel-gutter) 8px;
 }
 
 .chat-title {
@@ -51,12 +52,12 @@
 /* Search */
 .chat-search {
   position: relative;
-  padding: 8px 16px 12px;
+  padding: 8px var(--app-panel-gutter) 12px;
 }
 
 .search-icon {
   position: absolute;
-  left: 28px;
+  left: calc(var(--app-panel-gutter) + 12px);
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-secondary);
@@ -101,7 +102,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
+  padding: 12px var(--app-panel-gutter);
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -206,7 +207,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 20px;
+  padding: 14px var(--app-panel-gutter);
   border-bottom: 1px solid var(--border);
   background: var(--surface-light);
   flex-shrink: 0;
@@ -280,7 +281,7 @@
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 20px;
+  padding: 16px var(--app-panel-gutter);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -409,7 +410,7 @@
 
 /* Input */
 .live-chat-hint {
-  padding: 0 16px 8px;
+  padding: 0 var(--app-panel-gutter) 8px;
   background: var(--surface-light);
 }
 
@@ -417,7 +418,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 12px var(--app-panel-gutter);
   border-top: 1px solid var(--border);
   background: var(--surface-light);
   flex-shrink: 0;

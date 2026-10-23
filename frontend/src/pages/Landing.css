@@ -20,7 +20,7 @@
   position: relative;
   z-index: 3;
   display: flex;
-  width: min(1240px, calc(100% - 64px));
+  width: min(1240px, calc(100% - var(--app-page-gutter) - var(--app-page-gutter)));
   height: 82px;
   align-items: center;
   justify-content: space-between;
@@ -62,7 +62,7 @@
 
 .landing-hero {
   display: grid;
-  width: min(1240px, calc(100% - 64px));
+  width: min(1240px, calc(100% - var(--app-page-gutter) - var(--app-page-gutter)));
   min-height: 650px;
   grid-template-columns: minmax(0, .92fr) minmax(470px, 1.08fr);
   align-items: center;
@@ -141,7 +141,7 @@
 .landing-checks-section,
 .landing-help-section,
 .landing-privacy-band,
-.landing-footer { width: min(1160px, calc(100% - 64px)); margin-right: auto; margin-left: auto; }
+.landing-footer { width: min(1160px, calc(100% - var(--app-page-gutter) - var(--app-page-gutter))); margin-right: auto; margin-left: auto; }
 .landing-loop-section { padding: 94px 0 100px; }
 .landing-section-heading { display: grid; grid-template-columns: 1.2fr .8fr; align-items: end; gap: 48px; margin-bottom: 38px; }
 .landing-kicker { display: inline-block; margin-bottom: 13px; color: var(--landing-green); font-size: 9px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
@@ -214,12 +214,12 @@
 }
 
 @media (max-width: 760px) {
-  .landing-nav { width: min(100% - 34px, 600px); height: 70px; }
+  .landing-nav { width: min(600px, calc(100% - var(--app-page-gutter) - var(--app-page-gutter))); height: 70px; }
   .landing-brand-note, .landing-nav-links { display: none; }
   .landing-nav-actions { gap: 13px; }
   .landing-sign-in { font-size: 11px; }
   .landing-nav-cta { padding: 9px 11px; font-size: 10px; }
-  .landing-hero { width: min(100% - 34px, 600px); grid-template-columns: 1fr; gap: 37px; padding: 52px 0 49px; }
+  .landing-hero { width: min(600px, calc(100% - var(--app-page-gutter) - var(--app-page-gutter))); grid-template-columns: 1fr; gap: 37px; padding: 52px 0 49px; }
   .landing-hero h1 { font-size: clamp(44px, 11vw, 62px); }
   .landing-lede { margin-top: 19px; font-size: 14px; }
   .landing-hero-actions { gap: 17px; margin-top: 24px; }
@@ -233,7 +233,7 @@
   .landing-loop-ribbon > span { width: 100%; text-align: center; font-size: 8px; }
   .landing-loop-ribbon > strong { font-size: 8px; }
   .landing-loop-ribbon > i { width: 4px; height: 4px; }
-  .landing-loop-section, .landing-checks-section, .landing-help-section, .landing-privacy-band, .landing-footer { width: min(100% - 34px, 600px); }
+  .landing-loop-section, .landing-checks-section, .landing-help-section, .landing-privacy-band, .landing-footer { width: min(600px, calc(100% - var(--app-page-gutter) - var(--app-page-gutter))); }
   .landing-loop-section { padding: 66px 0 70px; }
   .landing-section-heading { grid-template-columns: 1fr; gap: 13px; margin-bottom: 24px; }
   .landing-section-heading h2, .landing-help-heading h2 { font-size: 37px; }

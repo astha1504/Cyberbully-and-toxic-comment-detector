@@ -1,13 +1,8 @@
-.explore-page {
-  padding: 32px 20px 80px;
-}
-
 .explore-container {
-  max-width: 560px;
+  width: 100%;
+  max-width: var(--app-content-max-width);
   margin: 0 auto;
 }
-
-.explore-container { max-width: 680px; }
 .explore-page-heading { margin-bottom: 20px; }
 .explore-page-heading h1 { margin: 7px 0 5px; font: 750 28px/1.18 Manrope, sans-serif; letter-spacing: -.045em; }
 .explore-page-heading p { margin: 0; color: var(--muted); font-size: 11px; }

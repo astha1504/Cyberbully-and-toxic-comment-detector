@@ -104,7 +104,7 @@ const Home = () => {
   }
 
   return (
-    <div className="home-page">
+    <div className="app-page-shell home-page">
       <section className="home-welcome">
         <div className="home-welcome-copy">
           <span className="home-eyebrow"><Sparkles size={14} /> PEHRA COMMUNITY</span>
@@ -125,11 +125,13 @@ const Home = () => {
         <ArrowUpRight size={17} />
       </Link>
 
-      <div className="home-feed-title-row">
-        <div><span className="home-section-kicker">YOUR COMMUNITY</span><h2>Community feed</h2></div>
+      <div className="home-feed-layout">
+        <div className="home-feed-title">
+          <span className="home-section-kicker">YOUR COMMUNITY</span>
+          <h2>Community feed</h2>
+        </div>
         <Link to="/create" className="home-feed-create"><Plus size={15} /> New post</Link>
-      </div>
-      <div className="feed-container">
+
         <div className="feed-main">
           {posts.length === 0 ? (
             <div className="empty-feed">
@@ -146,21 +148,20 @@ const Home = () => {
           )}
         </div>
 
-        {/* Sidebar - User & Suggestions */}
-        <div className="feed-sidebar">
+        <aside className="feed-sidebar" aria-label="Your profile and people to follow">
           <div className="sidebar-user">
-<Link to={`/profile/${user?.id}`} className="sidebar-user-info">
-               <img
-                 src={getAvatarUrl(user?.profile_picture, user?.username)}
-                 alt={user?.username || 'You'}
-                 className="sidebar-avatar"
-                 onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
-               />
-               <div>
-                 <span className="sidebar-name">{user?.username || 'You'}</span>
-                 <span className="sidebar-email">{user?.email}</span>
-               </div>
-             </Link>
+            <Link to={`/profile/${user?.id}`} className="sidebar-user-info">
+              <img
+                src={getAvatarUrl(user?.profile_picture, user?.username)}
+                alt={user?.username || 'You'}
+                className="sidebar-avatar"
+                onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
+              />
+              <div>
+                <span className="sidebar-name">{user?.username || 'You'}</span>
+                <span className="sidebar-email">{user?.email}</span>
+              </div>
+            </Link>
           </div>
 
           {suggestions.length > 0 && (
@@ -178,14 +179,14 @@ const Home = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <Link to={`/profile/${s.id}`} className="suggestion-info">
-<img
-                         src={getAvatarUrl(s.profile_picture, s.username)}
-                         alt={s.username}
-                         className="suggestion-avatar"
-                         onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
-                       />
-                       <div>
-                         <span className="suggestion-name">{s.username}</span>
+                      <img
+                        src={getAvatarUrl(s.profile_picture, s.username)}
+                        alt={s.username}
+                        className="suggestion-avatar"
+                        onError={(e) => { e.target.src = FALLBACK_AVATAR; }}
+                      />
+                      <div>
+                        <span className="suggestion-name">{s.username}</span>
                         <span className="suggestion-bio">
                           {s.bio || 'New to Pehra'}
                         </span>
@@ -203,7 +204,7 @@ const Home = () => {
               </div>
             </div>
           )}
-        </div>
+        </aside>
       </div>
     </div>
   );

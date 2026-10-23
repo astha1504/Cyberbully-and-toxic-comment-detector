@@ -8,7 +8,9 @@ App: Pehra, AI-assisted cyberbullying prevention and India-first cyber safety pl
 
 DEMO GOAL
 
-Start on Pehra's public landing page. Show the Pehra Safety Loop and its India-focused scam guidance. Then demonstrate safer posting, explainable scam checks, chat, image OCR, voice transcription, repeat-offender controls, private case follow-up, and consistent light and dark themes.
+Start on Pehra's public landing page. 
+Show the Pehra Safety Loop and its India-focused scam guidance. 
+Then demonstrate safer posting, explainable scam checks, chat, image OCR, voice transcription, repeat-offender controls, private case follow-up, and consistent light and dark themes.
 
 LANDING PAGE AND BRAND CHECK
 

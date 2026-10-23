@@ -143,8 +143,9 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/safety" element={<Navigate to="/safety/scan" replace />} />
       <Route
-        path="/safety"
+        path="/safety/:section"
         element={
           <ProtectedRoute>
             <AppLayout>

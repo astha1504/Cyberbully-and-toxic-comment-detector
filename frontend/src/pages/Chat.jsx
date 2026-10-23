@@ -9,7 +9,7 @@ import {
 import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile, AlertTriangle, Mic
+  Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile, AlertTriangle, Mic, MessageCircle
 } from 'lucide-react';
 import { checkAudioToxicity } from '../services/api';
 import toast from 'react-hot-toast';
@@ -622,7 +622,7 @@ const filteredConversations = conversations.filter((conv) =>
           </>
         ) : (
           <div className="no-chat-selected">
-            <div className="no-chat-icon">💬</div>
+            <div className="no-chat-icon"><MessageCircle size={42} strokeWidth={1.6} /></div>
             <h3>Your Messages</h3>
             <p>Search by username or start a chat from a profile, follower, or following list.</p>
           </div>

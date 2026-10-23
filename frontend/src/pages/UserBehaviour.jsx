@@ -45,7 +45,7 @@ const UserBehaviour = () => {
 
   if (loading) {
     return (
-      <div className="behaviour-page">
+      <div className="app-page-shell behaviour-page">
         <div className="behaviour-loading">
           <div className="spinner"></div>
           <p>Loading your behaviour profile…</p>
@@ -56,7 +56,7 @@ const UserBehaviour = () => {
 
   if (loadError) {
     return (
-      <div className="behaviour-page">
+      <div className="app-page-shell behaviour-page">
         <div className="behaviour-error" role="alert">
           <p>{loadError}</p>
           <button className="behaviour-refresh-btn" onClick={fetchBehaviour}>Try again</button>
@@ -90,7 +90,7 @@ const UserBehaviour = () => {
   ];
 
   return (
-    <div className="behaviour-page">
+    <div className="app-page-shell behaviour-page">
       <motion.div
         className="behaviour-header"
         initial={{ opacity: 0, y: -10 }}

@@ -57,7 +57,7 @@
 .nav-utility-button:hover { border-color: var(--border); color: var(--text); background: var(--surface-2); }
 .logout-button { flex: 0 0 38px; }
 
-.app-topbar { position: fixed; z-index: 110; top: 0; right: 0; left: 258px; display: flex; height: 72px; align-items: center; justify-content: space-between; gap: 18px; padding: 0 34px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(18px); }
+.app-topbar { position: fixed; z-index: 110; top: 0; right: 0; left: 258px; display: flex; height: 72px; align-items: center; justify-content: space-between; gap: 18px; padding: 0 var(--app-page-gutter); border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(18px); }
 .topbar-context { display: flex; flex-direction: column; line-height: 1.25; }
 .topbar-kicker { color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .14em; }
 .topbar-title { margin-top: 4px; color: var(--text); font-family: Manrope, sans-serif; font-size: 14px; font-weight: 750; }
@@ -86,7 +86,7 @@
 
 @media (max-width: 760px) {
   .navbar-sidebar { display: none; }
-  .app-topbar { left: 0; height: 62px; padding: 0 16px; }
+  .app-topbar { left: 0; height: 62px; padding: 0 var(--app-page-gutter); }
   .mobile-brand { display: block; }
   .topbar-context { display: none; }
   .topbar-actions { gap: 7px; }

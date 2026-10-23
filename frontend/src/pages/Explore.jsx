@@ -43,7 +43,7 @@ const Explore = () => {
   };
 
   return (
-    <div className="explore-page">
+    <div className="app-page-shell explore-page">
       <div className="explore-container">
         <div className="explore-page-heading">
           <span className="page-eyebrow"><Sparkles size={13} /> COMMUNITY DIRECTORY</span>

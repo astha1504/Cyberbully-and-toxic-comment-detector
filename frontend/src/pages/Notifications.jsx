@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, BellOff, Check, CheckCheck, RefreshCw } from 'lucide-react';
+import { Bell, BellOff, Check, CheckCheck, CheckCircle2, RefreshCw } from 'lucide-react';
 import { getNotifications, markAllNotifsRead } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
 import NotificationCard from '../components/NotificationCard';
@@ -74,7 +74,7 @@ const Notifications = () => {
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <div className="notifs-page">
+    <div className="app-page-shell notifs-page">
       {/* Header */}
       <div className="notifs-header">
         <div className="notifs-title-row">
@@ -159,7 +159,7 @@ const Notifications = () => {
             <h3>No notifications yet</h3>
             <p>
               {activeTab === 'Unread'
-                ? "You're all caught up! 🎉"
+                ? <span className="notifs-caught-up"><CheckCircle2 size={15} aria-hidden="true" /> You're all caught up!</span>
                 : "When someone likes or comments on your posts, you'll see it here."}
             </p>
           </motion.div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowUpRight, BadgeCheck, CalendarClock, Check, ChevronRight,
+  ArrowUpRight, CalendarClock, Check,
   Clipboard, ExternalLink, FileText, HeartHandshake, LifeBuoy,
   Mail, MapPin, MessageSquare, Phone, ShieldAlert, ShieldCheck,
   Smartphone, Sparkles, Users
@@ -33,8 +33,19 @@ const INCIDENT_TYPES = [
   'Other online safety concern'
 ];
 
+const SAFETY_SECTIONS = [
+  { id: 'scan', label: 'Scan a message', icon: ShieldCheck, description: 'Check a suspicious SMS, WhatsApp message, screenshot, or voice note.' },
+  { id: 'help', label: 'Get help', icon: LifeBuoy, description: 'Find emergency contacts and official cyber reporting services.' },
+  { id: 'report', label: 'Prepare a report', icon: FileText, description: 'Organize incident details before contacting an authority.' },
+  { id: 'reports', label: 'My reports', icon: Clipboard, description: 'Review private case status, action history, evidence, and appeals.' },
+];
+
 const SafetyCenter = () => {
   const { user } = useAuth();
+  const { section: routeSection } = useParams();
+  const navigate = useNavigate();
+  const currentSection = SAFETY_SECTIONS.find(({ id }) => id === routeSection);
+  const activeSection = currentSection?.id || 'scan';
   const [incidentType, setIncidentType] = useState(INCIDENT_TYPES[0]);
   const [incidentDate, setIncidentDate] = useState('');
   const [stateOrUt, setStateOrUt] = useState('');
@@ -156,6 +167,7 @@ const SafetyCenter = () => {
       setSafetyReports((current) => [data, ...current]);
       setCaseMessage(`Report received. Your case reference is ${data.case_id}.`);
       setCaseConsent(false);
+      navigate('/safety/reports');
     } catch (error) {
       setCaseError(getApiErrorMessage(error, 'Could not submit your report.'));
     } finally {
@@ -285,70 +297,82 @@ const SafetyCenter = () => {
     }
   };
 
+  if (!currentSection) return <Navigate to="/safety/scan" replace />;
+  const SectionIcon = currentSection.icon;
+
   return (
-    <div className="safety-page">
-      <section className="safety-hero">
-        <div className="safety-hero-copy">
-          <div className="safety-eyebrow"><ShieldCheck size={15} /> Safety, support, and next steps</div>
-          <h1>A safer space starts with a clear next step.</h1>
-          <p>Get help for online harassment, threats, impersonation, or fraud. Prepare a clear incident report and choose where to take it.</p>
-          <a className="safety-hero-cta" href="#incident-report-form">
-            Prepare an incident report <ChevronRight size={18} />
-          </a>
-        </div>
-        <div className="safety-hero-art" aria-hidden="true">
-          <div className="safety-orbit safety-orbit-one" />
-          <div className="safety-orbit safety-orbit-two" />
-          <div className="safety-shield"><ShieldCheck size={68} strokeWidth={1.45} /></div>
-          <span className="safety-art-dot dot-one" />
-          <span className="safety-art-dot dot-two" />
-          <span className="safety-art-dot dot-three" />
-        </div>
-        <div className="safety-hero-foot"><span><BadgeCheck size={15} /> Privacy-first report builder</span><span>Details stay in this browser until you copy or open an email draft.</span></div>
+    <div className="app-page-shell safety-page">
+      <header className="safety-page-heading">
+        <span className="safety-kicker safety-page-kicker"><SectionIcon size={14} /> Safety Center</span>
+        <h1>{currentSection.label}</h1>
+        <p>{currentSection.description}</p>
+      </header>
+
+      {activeSection === 'scan' && (
+        <section className="safety-section-page">
+          <CyberSafetyScanner />
+        </section>
+      )}
+
+      {activeSection === 'help' && (
+      <section className="safety-section-page">
+        <section className="safety-urgent" aria-labelledby="urgent-help-title">
+          <div className="safety-urgent-heading">
+            <div className="safety-section-icon urgent-icon"><LifeBuoy size={19} /></div>
+            <div><h2 id="urgent-help-title">Need help now?</h2><p>Contact emergency services for immediate danger.</p></div>
+          </div>
+          <a className="urgent-contact" href="tel:112"><span className="urgent-number">112</span><span>Police emergency</span><Phone size={16} /></a>
+          <a className="urgent-contact" href="tel:181"><span className="urgent-number">181</span><span>Women’s helpline</span><Phone size={16} /></a>
+          <a className="urgent-contact" href="tel:1930"><span className="urgent-number">1930</span><span>Financial cyber fraud</span><Phone size={16} /></a>
+        </section>
+
+        <section className="safety-section" aria-labelledby="safety-actions-title">
+          <div className="safety-section-heading">
+            <div><span className="safety-kicker">Official support</span><h2 id="safety-actions-title">Choose the right response</h2></div>
+            <p>Use verified government channels for reports that need official action.</p>
+          </div>
+          <div className="safety-resource-grid">
+            <article className="safety-resource-card resource-women">
+              <div className="resource-icon"><HeartHandshake size={21} /></div>
+              <span className="resource-label">For women and children</span>
+              <h3>Report online abuse</h3>
+              <p>Use the National Cyber Crime Reporting Portal for online harassment, stalking, threats, or non-consensual content.</p>
+              <a href={OFFICIAL_LINKS.cybercrime} target="_blank" rel="noreferrer">Open cybercrime.gov.in <ExternalLink size={15} /></a>
+            </article>
+            <article className="safety-resource-card resource-telecom">
+              <div className="resource-icon"><Smartphone size={21} /></div>
+              <span className="resource-label">Fraud call, SMS, or WhatsApp</span>
+              <h3>Report with Chakshu</h3>
+              <p>Send suspected fraud communications to DoT’s Chakshu service through Sanchar Saathi.</p>
+              <a href={OFFICIAL_LINKS.sancharSaathi} target="_blank" rel="noreferrer">Open Chakshu on Sanchar Saathi <ExternalLink size={15} /></a>
+            </article>
+            <article className="safety-resource-card resource-evidence">
+              <div className="resource-icon"><FileText size={21} /></div>
+              <span className="resource-label">Before you report</span>
+              <h3>Keep useful evidence</h3>
+              <p>Save dates, profile links, message URLs, and screenshots. Avoid editing originals or sharing private images further.</p>
+              <button className="resource-tab-link" type="button" onClick={() => navigate('/safety/report')}>Prepare a factual summary <ArrowUpRight size={15} /></button>
+            </article>
+          </div>
+        </section>
+
+        <section className="safety-integrity">
+          <div className="integrity-main">
+            <div className="safety-section-icon integrity-icon"><Users size={20} /></div>
+            <div><span className="safety-kicker">Built around human review</span><h2>Automation should support people.</h2><p>Our moderation signals help people pause and review harmful content. A score is not a legal finding, and Pehra does not file reports with authorities.</p></div>
+          </div>
+          <div className="integrity-side">
+            <div className="pratibimb-mark"><ShieldCheck size={16} /> Public service context</div>
+            <h3>Pratibimb is for law enforcement.</h3>
+            <p>Pratibimb is part of I4C’s Samanvaya platform for authorized agencies. Pehra has no access to it. Citizens should report through the official portal.</p>
+            <a href={OFFICIAL_LINKS.pratibimbInfo} target="_blank" rel="noreferrer">See the official MHA description <ExternalLink size={14} /></a>
+          </div>
+        </section>
       </section>
+      )}
 
-      <section className="safety-urgent" aria-labelledby="urgent-help-title">
-        <div className="safety-urgent-heading">
-          <div className="safety-section-icon urgent-icon"><LifeBuoy size={19} /></div>
-          <div><h2 id="urgent-help-title">Need help now?</h2><p>Contact emergency services for immediate danger.</p></div>
-        </div>
-        <a className="urgent-contact" href="tel:112"><span className="urgent-number">112</span><span>Police emergency</span><Phone size={16} /></a>
-        <a className="urgent-contact" href="tel:181"><span className="urgent-number">181</span><span>Women’s helpline</span><Phone size={16} /></a>
-        <a className="urgent-contact" href="tel:1930"><span className="urgent-number">1930</span><span>Financial cyber fraud</span><Phone size={16} /></a>
-      </section>
-
-      <CyberSafetyScanner />
-
-      <section className="safety-section" aria-labelledby="safety-actions-title">
-        <div className="safety-section-heading">
-          <div><span className="safety-kicker">Support that leads somewhere</span><h2 id="safety-actions-title">Choose the right response</h2></div>
-          <p>Use verified government channels for reports that need official action.</p>
-        </div>
-        <div className="safety-resource-grid">
-          <article className="safety-resource-card resource-women">
-            <div className="resource-icon"><HeartHandshake size={21} /></div>
-            <span className="resource-label">For women and children</span>
-            <h3>Report online abuse</h3>
-            <p>Use the National Cyber Crime Reporting Portal for online harassment, stalking, threats, or non-consensual content.</p>
-            <a href={OFFICIAL_LINKS.cybercrime} target="_blank" rel="noreferrer">Open cybercrime.gov.in <ExternalLink size={15} /></a>
-          </article>
-          <article className="safety-resource-card resource-telecom">
-            <div className="resource-icon"><Smartphone size={21} /></div>
-            <span className="resource-label">Fraud call, SMS, or WhatsApp</span>
-            <h3>Report with Chakshu</h3>
-            <p>Send suspected fraud communications to DoT’s Chakshu service through Sanchar Saathi.</p>
-            <a href={OFFICIAL_LINKS.sancharSaathi} target="_blank" rel="noreferrer">Open Chakshu on Sanchar Saathi <ExternalLink size={15} /></a>
-          </article>
-          <article className="safety-resource-card resource-evidence">
-            <div className="resource-icon"><FileText size={21} /></div>
-            <span className="resource-label">Before you report</span>
-            <h3>Keep useful evidence</h3>
-            <p>Save dates, profile links, message URLs, and screenshots. Avoid editing originals or sharing private images further.</p>
-            <a href="#incident-report-form">Prepare a factual summary <ArrowUpRight size={15} /></a>
-          </article>
-        </div>
-      </section>
-
+      {activeSection === 'report' && (
+      <section className="safety-section-page">
       <section className="safety-report-layout" id="incident-report-form">
         <div className="report-intro">
           <div className="report-intro-icon"><Sparkles size={20} /></div>
@@ -421,13 +445,18 @@ const SafetyCenter = () => {
           )}
         </div>
       </section>
+      </section>
+      )}
 
+      {activeSection === 'reports' && (
+      <section className="safety-section-page">
       <section className="safety-cases" aria-labelledby="safety-cases-title">
         <div className="safety-cases-heading">
           <div><span className="safety-kicker">Private case tracking</span><h2 id="safety-cases-title">Your safety reports</h2></div>
           {user?.is_safety_moderator && <Link to="/safety/moderation" className="moderator-queue-link">Open moderator queue <ArrowUpRight size={14} /></Link>}
         </div>
-        {caseError && !report && <p className="case-list-error" role="alert">{caseError}</p>}
+        {caseError && <p className="case-list-error" role="alert">{caseError}</p>}
+        {caseMessage && <p className="case-success" role="status">{caseMessage}</p>}
         {safetyReports.length === 0 ? (
           <p className="safety-cases-empty">No private reports yet. Submitted case references and status updates appear here.</p>
         ) : (
@@ -508,21 +537,9 @@ const SafetyCenter = () => {
             ))}
           </div>
         )}
-        {caseMessage && !report && <p className="case-success" role="status">{caseMessage}</p>}
       </section>
-
-      <section className="safety-integrity">
-        <div className="integrity-main">
-          <div className="safety-section-icon integrity-icon"><Users size={20} /></div>
-          <div><span className="safety-kicker">Built around human review</span><h2>Automation should support people.</h2><p>Our moderation signals help people pause and review harmful content. A score is not a legal finding, and Pehra does not file reports with authorities.</p></div>
-        </div>
-        <div className="integrity-side">
-          <div className="pratibimb-mark"><ShieldCheck size={16} /> Public service context</div>
-          <h3>Pratibimb is for law enforcement.</h3>
-          <p>Pratibimb is part of I4C’s Samanvaya platform for authorized agencies. Pehra has no access to it. Citizens should report through the official portal.</p>
-          <a href={OFFICIAL_LINKS.pratibimbInfo} target="_blank" rel="noreferrer">See the official MHA description <ExternalLink size={14} /></a>
-        </div>
       </section>
+      )}
 
       <footer className="safety-footer"><ShieldCheck size={16} /><span>Safety resources link to official services. For immediate danger, call 112.</span></footer>
     </div>
