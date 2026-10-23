@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import auth, posts, comments, notifications, analytics, websockets, users, chat, moderation
-from .database import ensure_indexes
+from .routes import auth, posts, comments, notifications, analytics, websockets, users, chat, moderation, cyber_safety
+from .database import ensure_indexes, ensure_safety_report_indexes
 
 app = FastAPI(
-    title="AI-Powered Toxic Comment Detector",
-    description="Backend for detecting and moderating toxic comments in real-time.",
+    title="Pehra Community and Cyber Safety API",
+    description="Community moderation, cyber-safety analysis, and private safety case workflows.",
     version="1.0.0"
 )
 
@@ -28,12 +28,14 @@ app.include_router(websockets.router)
 app.include_router(users.router)
 app.include_router(chat.router)
 app.include_router(moderation.router)
+app.include_router(cyber_safety.router)
 
 
 @app.on_event("startup")
 async def create_database_indexes():
     await ensure_indexes()
+    await ensure_safety_report_indexes()
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the AI-Powered Toxic Comment Detector API"}
+    return {"message": "Welcome to the Pehra safety platform API"}

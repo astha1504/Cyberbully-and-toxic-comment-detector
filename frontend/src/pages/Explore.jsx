@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { searchUsers } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X } from 'lucide-react';
+import { Search, Sparkles, X } from 'lucide-react';
 import './Explore.css';
 
 const Explore = () => {
@@ -45,6 +45,11 @@ const Explore = () => {
   return (
     <div className="explore-page">
       <div className="explore-container">
+        <div className="explore-page-heading">
+          <span className="page-eyebrow"><Sparkles size={13} /> COMMUNITY DIRECTORY</span>
+          <h1>Find your people.</h1>
+          <p>Discover members, follow their updates, and start thoughtful conversations.</p>
+        </div>
         <div className="explore-search-wrapper">
           <div className="explore-search-bar">
             <Search size={20} className="explore-search-icon" />
@@ -84,13 +89,14 @@ const Explore = () => {
                 >
                   <Link to={`/profile/${user.id}`} className="result-item">
                     <img
-                      src={user.profile_picture}
+                      src={user.profile_picture || '/placeholder-avatar.svg'}
                       alt={user.name}
                       className="result-avatar"
+                      onError={(event) => { event.currentTarget.src = '/placeholder-avatar.svg'; }}
                     />
                     <div className="result-info">
                       <span className="result-name">{user.name}</span>
-                      <span className="result-bio">{user.bio || 'Socialite user'}</span>
+                      <span className="result-bio">{user.bio || 'Pehra member'}</span>
                     </div>
                     {user.is_following && (
                       <span className="following-tag">Following</span>

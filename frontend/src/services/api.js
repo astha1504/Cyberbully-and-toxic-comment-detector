@@ -91,6 +91,30 @@ export const checkAudioToxicity = (file) => {
   body.append('audio', file);
   return API.post('/api/moderation/check-audio', body);
 };
+export const analyzeCyberSafety = (text, moneyLost = false, credentialsShared = false) => API.post('/api/cyber-safety/analyze', {
+  text,
+  money_lost: moneyLost,
+  credentials_shared: credentialsShared,
+});
+export const createSafetyReport = (data) => API.post('/api/cyber-safety/reports', data);
+export const getMySafetyReports = () => API.get('/api/cyber-safety/reports/mine');
+export const getSafetyReportQueue = () => API.get('/api/cyber-safety/reports/queue');
+export const reviewSafetyReport = (id, data) => API.patch(`/api/cyber-safety/reports/${id}`, data);
+export const appealSafetyReport = (id, note) => API.post(`/api/cyber-safety/reports/${id}/appeal`, { note });
+export const getSafetyReportHistory = (id) => API.get(`/api/cyber-safety/reports/${id}/history`);
+export const getSafetyEvidence = (id) => API.get(`/api/cyber-safety/reports/${id}/evidence`);
+export const uploadSafetyEvidence = (id, file) => {
+  const body = new FormData();
+  body.append('file', file);
+  return API.post(`/api/cyber-safety/reports/${id}/evidence`, body);
+};
+export const downloadSafetyEvidence = (id, evidenceId) => API.get(
+  `/api/cyber-safety/reports/${id}/evidence/${evidenceId}`,
+  { responseType: 'blob' },
+);
+export const deleteSafetyEvidence = (id, evidenceId) => API.delete(
+  `/api/cyber-safety/reports/${id}/evidence/${evidenceId}`,
+);
 
 // ── Moderation ─────────────────────────────────────────────────────────────────
 export const checkTextModeration = (text) => API.post('/api/moderation/check-text', { text });

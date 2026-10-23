@@ -1,83 +1,21 @@
-/* App Layout */
-.app-layout {
-  display: flex;
-  min-height: 100vh;
-}
-
+.app-layout { display: flex; min-height: 100vh; }
 .main-content {
   flex: 1;
-  margin-left: 245px;
-  transition: margin-left 0.3s ease;
+  min-width: 0;
+  min-height: 100vh;
+  margin-left: 258px;
+  padding-top: 72px;
+  background: var(--bg);
+  transition: margin-left var(--transition-slow), background-color var(--transition-slow);
 }
+.chat-content { height: 100vh; padding: 0; overflow: hidden; }
+.chat-layout .app-topbar { display: none; }
 
-.chat-layout .main-content {
-  margin-left: 245px;
+@media (max-width: 1080px) {
+  .main-content { margin-left: 80px; }
 }
-
-.chat-content {
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* Page Loading */
-.page-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-}
-
-.spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .main-content {
-    margin-left: 72px;
-  }
-  .chat-layout .main-content {
-    margin-left: 72px;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    margin-bottom: 60px;
-  }
-  .chat-layout .main-content {
-    margin-left: 0;
-    margin-bottom: 0;
-  }
-  .chat-content {
-    height: calc(100vh - 0px);
-  }
+@media (max-width: 760px) {
+  .main-content { min-height: 100dvh; margin: 0 0 70px; padding-top: 62px; }
+  .chat-content { height: 100dvh; margin: 0; padding: 0; }
+  .chat-layout .navbar-mobile { display: none; }
 }

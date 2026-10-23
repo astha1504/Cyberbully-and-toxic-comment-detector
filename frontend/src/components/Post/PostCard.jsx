@@ -43,9 +43,9 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
   const commentRewriteFetched = useRef(new Set());
   const [commentTooltipPos, setCommentTooltipPos] = useState({ x: 0, y: 0 });
 
-  const getAvatarUrl = (pic, name) => {
+  const getAvatarUrl = (pic) => {
     if (pic && (pic.startsWith('http') || pic.startsWith('data:'))) return pic;
-    return `https://ui-avatars.com/api/?background=C56E5A&color=fff&name=${encodeURIComponent(name || 'User')}`;
+    return '/placeholder-avatar.svg';
   };
 
   const postId = post.id || post._id;
@@ -358,7 +358,7 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
             src={postAuthorAvatar}
             alt={postAuthorName}
             className="post-avatar"
-            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?background=C56E5A&color=fff&name=User`; }}
+            onError={(e) => { e.target.src = '/placeholder-avatar.svg'; }}
           />
           <div>
             <span className="post-username">{postAuthorName}</span>
@@ -589,7 +589,7 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
                       src={getAvatarUrl(comment.user_profile_picture, comment.user_name)}
                       alt=""
                       className="comment-avatar"
-                      onError={(e) => { e.target.src = `https://ui-avatars.com/api/?background=C56E5A&color=fff&name=User`; }}
+                      onError={(e) => { e.target.src = '/placeholder-avatar.svg'; }}
                     />
                     <div className="comment-content">
                       <span className="comment-username">{comment.user_name}</span>

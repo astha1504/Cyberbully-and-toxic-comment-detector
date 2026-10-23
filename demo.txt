@@ -1,0 +1,366 @@
+PEHRA DEMO RUN SHEET
+
+Event: Innovate & Elevate 2026
+Demo date: Saturday, 24 October 2026
+Prepared: Friday, 23 October 2026
+Suggested live demo length: 8 minutes
+App: Pehra, AI-assisted cyberbullying prevention and India-first cyber safety platform
+
+DEMO GOAL
+
+Show one clear path from writing a post to receiving a safety check, editing harmful wording, and tracking repeated violations. Then show chat, image OCR, voice transcription, notifications, and analytics during the full rehearsal.
+
+ONE-SENTENCE INTRO
+
+Pehra helps people pause before sharing, explains flagged wording, checks posts and chats, and tracks repeat violations.
+
+SHOWCASE READINESS
+
+Show Pehra as a working student prototype with a clear India-focused safety workflow. The current build is suitable for the exhibition if the live rehearsal passes. Do not describe the product as perfect, proven at scale, or production-ready. The automated suite passed, but its backend tests use in-memory database stand-ins and mocked external providers. No independent security review, load test, or measured user pilot has taken place.
+
+The strongest story is the combination of safer posting and chat, explainable scam checks for text, screenshots, and voice notes, practical recovery guidance, and a consent-based private case workflow. The differentiator is this connected workflow in one student-community platform. Do not claim Pehra is the first or only product with these features.
+
+30-SECOND PITCH
+
+Pehra is a safety layer for student communities. Our Pehra Safety Loop helps people pause before harmful posts, understand suspicious messages across text, screenshots, and voice notes, then follow a relevant next step. People see the warning signs and reach an official service or request consent-based review by a community safety moderator. Pehra supports safer decisions. It does not decide guilt or file a police complaint.
+
+JUDGE QUESTIONS AND ANSWERS
+
+1. What problem does Pehra solve?
+
+Online communities face both harmful user interactions and scam messages shared through calls, SMS, WhatsApp, screenshots, and voice notes. People often need a clear explanation and next step before they decide what to do. Pehra combines an early posting intervention with India-focused scam triage and a private case follow-up flow.
+
+2. What is the unique selling point?
+
+Our USP is an India-focused safety workflow for student communities. It combines prevention while people write, repeat-behavior moderation, explainable scam checks across text, screenshots, and voice notes, and situation-specific next steps. Users can move from a warning to an official reporting service or consent-based moderator review. We call this the Pehra Safety Loop: pause, understand, respond, connect. This is a distinctive product combination we are building, not a claim that no other service offers related features. Our pilot will test whether this combination improves user decisions.
+
+3. How is Pehra different from a government reporting portal?
+
+Pehra helps people recognize warning signs and prepare a safer response. NCRP handles cybercrime complaints, and Chakshu accepts reports about suspected fraud communications. Pehra does not replace either service. A financial fraud victim should report through 1930 or NCRP. A suspicious call, SMS, or WhatsApp message should go to Chakshu. A negative match in an identifier search does not prove safety because the official repository says records can be incomplete or contain errors.
+
+4. What happens in a live scan?
+
+The user pastes a message or supplies a screenshot or voice note. Screenshot text goes through Tesseract OCR. Voice goes to the configured Groq transcription service, then the transcript is checked. The scanner applies explainable text patterns, returns matching warning signals, and provides relevant safety steps and official links. The app does not open links, install files, or inspect an APK for malware. The result is a warning, not proof of fraud.
+
+5. How does the posting intervention work in real time?
+
+While a user types, the frontend waits briefly, then asks the API to check the draft. A warning shows matched wording and available category signals. The user chooses to edit, cancel, or continue. Accepted posts and comments also receive server-side moderation, which can finish in the background. Chat checks the message before delivery and offers a review choice. The third confirmed moderation finding triggers a 24-hour posting mute.
+
+6. What real-world impact do you have so far?
+
+The current evidence is a working prototype and automated tests, not a field study. We have not measured prevented fraud, reduced harassment, or user outcomes yet. A college pilot should track edit and continue rates, confirmed false positives and misses, time to an appropriate official service, repeat violations, user trust, and appeal outcomes. We will report measured results after a reviewed pilot.
+
+7. Who is the first user and what is the scope?
+
+The first users are student communities, colleges, and online groups that need safer discussion and basic scam awareness. The current prototype checks posts, comments, chat, image text, voice transcripts, and user-submitted scam messages. Text patterns include English, Hindi, Hinglish, and selected Marathi, Bengali, Tamil, and Telugu phrases. Coverage is limited and needs broader language testing.
+
+8. How does Pehra scale?
+
+The current build uses a React frontend, FastAPI service, and MongoDB. It is a local prototype, not a deployed high-availability service. A production plan would add stateless API replicas behind a load balancer, queued workers for OCR and transcription, encrypted object storage for evidence, rate limits, monitoring, backups, retention controls, and load testing. We would measure latency and error rates before increasing rollout size.
+
+9. How would the startup earn revenue?
+
+A plausible first model is a paid service for colleges and community platforms, with admin tools, configurable moderation policies, and safety reporting workflows. We have not validated buyer demand, pricing, or sales yet. The next step is a small pilot with student and safety reviewers, followed by evidence on usefulness and operating cost.
+
+10. How do you handle false positives and missed threats?
+
+The scanner uses patterns and is not a calibrated probability model. Text moderation also depends on the available model and explicit phrase rules. OCR can misread images, and transcription can mishear speech. We show the detected evidence, avoid claiming certainty, and direct users to official guidance. A reviewed dataset and human evaluation are required before claiming accuracy.
+
+11. What data do you keep?
+
+The scan endpoint analyzes submitted content without creating a case. A user who wants follow-up must separately consent to a private case, and evidence upload asks for separate consent. Case records and evidence expire through a 30-day MongoDB TTL policy. Reporters and allowlisted moderators have application-level access, and evidence access is recorded in the case history. The history is not a tamper-proof external audit log. Evidence receives file-type and size checks, not malware scanning. These controls need a security review before production use.
+
+12. Is Pehra connected to police, Chakshu, NCRP, or Pratibimb?
+
+No. Pehra links users to official services and helps prepare information. Users submit through the official service themselves. Pratibimb is an I4C Samanvaya module for law-enforcement agencies. Pehra has no access to it and sends it no data.
+
+13. Is this a women-safety product?
+
+Safer posting, reporting, and case follow-up support safer online communities, including women and students. The current prototype does not provide emergency response, live location sharing, or law-enforcement intervention. We need feedback from women-safety organizations before making broader safety claims or adding those workflows.
+
+14. What remains before a startup launch?
+
+Run a supervised college pilot, measure language-specific accuracy, review false positives and misses, complete a threat model and independent security review, test load and recovery, improve evidence storage and malware checks, and define support and deletion operations. Validate a buyer and pricing model before describing the business as proven.
+
+15. What should judges remember?
+
+Pehra links prevention, explanation, and action. It helps a user pause before sending harmful content, see why a suspicious message raised concern, and reach the appropriate official channel. The next milestone is a measured pilot with student users and safety reviewers.
+
+DEMO ANSWER IF A FEATURE FAILS
+
+Show the prepared text scan and explain the screenshot OCR or voice transcript step. State plainly which provider or local service is unavailable. Do not imply an offline scan proves a message safe. Skip the live step if it fails and continue with the prepared synthetic example.
+
+OFFICIAL REFERENCE LINKS FOR JUDGE QUESTIONS
+
+CERT-In fake e-Challan Android malware advisory:
+https://www.cert-in.org.in/s2cMainServlet?CACODE=CICA-2026-3492&pageid=PUBADV01
+
+Sanchar Saathi Chakshu:
+https://sancharsaathi.gov.in/sfc/
+
+National Cyber Crime Reporting Portal:
+https://cybercrime.gov.in/
+
+NCRP suspect repository disclaimer:
+https://cybercrime.gov.in/webform/suspect_search_repository.aspx
+
+Ministry of Home Affairs report describing Pratibimb as an LEA module of Samanvaya:
+https://www.mha.gov.in/sites/default/files/AREnglish_24032026.pdf
+
+LOCAL CHECK RESULTS FROM 23 OCTOBER 2026
+
+MongoDB service: Running. mongosh ping returned { ok: 1 }.
+Tesseract OCR: Version 5.5.0 found on this computer.
+Text model: Local quantized weights and tokenizer files are present. Weights file size is 855,747,381 bytes.
+Groq settings: GROQ_API_KEY and GROQ_REWRITE_MODEL are set in the local backend environment. Secret values are not copied here. Test provider access before relying on rewrite or voice features.
+Frontend production build: Passed with npm run build.
+Frontend dev-server check: Passed. Vite returned HTTP 200 and served the React root element. No full browser login-to-data walkthrough was run.
+Frontend lint: Unavailable. The frontend has no ESLint configuration file.
+Backend syntax and imports: Passed with Python 3.12 and the installed backend packages.
+Backend smoke check: Passed. GET / returned 200. GET /openapi.json returned 200 with 34 paths. MongoDB startup index creation completed.
+Text moderation endpoint: Passed with a temporary test-user override. The sample phrase returned isToxic true, score 0.95, High severity, and phrase signals 100, 100, 0. This check used the deterministic phrase matcher and did not load the model weights.
+Automated tests: The latest completed run passed 51 backend tests and 38 frontend tests. Backend tests use in-memory MongoDB stand-ins and mocked providers. They do not verify live database persistence, external provider access, production security, or load capacity. Complete a browser rehearsal with the configured services before the event.
+Local environment issue: backend/.venv and backend/venv point to Python installs no longer present at their saved paths. Rebuild backend/.venv before starting Uvicorn from a normal terminal.
+
+BEFORE THE EVENT
+
+1. Rebuild the stale backend environment if its Python command fails.
+
+Open PowerShell and run:
+
+Set-Location "C:\Users\Shahzade Alam\Desktop\PROJECTS\cyberbully-v1\backend"
+Rename-Item .venv .venv-stale
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+Keep .venv-stale until the new environment starts correctly. If .venv-stale already exists, pick another backup name.
+
+2. Start MongoDB and check the service.
+
+Get-Service MongoDB
+mongosh --quiet --eval "db.runCommand({ ping: 1 })"
+
+Expected: MongoDB shows Running. Ping shows ok: 1.
+
+3. Start the backend in Terminal 1.
+
+Set-Location "C:\Users\Shahzade Alam\Desktop\PROJECTS\cyberbully-v1\backend"
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+
+Open http://localhost:8000 in a browser. The API should show its welcome response. Open http://localhost:8000/docs for API docs.
+
+4. Start the frontend in Terminal 2.
+
+Set-Location "C:\Users\Shahzade Alam\Desktop\PROJECTS\cyberbully-v1\frontend"
+npm run dev
+
+Open http://localhost:5173. Keep both terminals running.
+
+5. Register three demo accounts from the Sign Up page. The Full Name field is sent as the username, so enter the handles below with no spaces. Use demo-only accounts and data.
+
+PRESENTER ACCOUNT
+Full Name / username: kindvoice_demo
+Email: kindvoice.demo@example.com
+Password: SocialiteDemo26!
+
+COMMUNITY ACCOUNT
+Full Name / username: community_demo
+Email: community.demo@example.com
+Password: SocialiteDemo26!
+
+REPEAT-OFFENDER ACCOUNT
+Full Name / username: pattern_demo
+Email: pattern.demo@example.com
+Password: SocialiteDemo26!
+
+The password is short enough for bcrypt's 72-byte input limit. If a demo email already exists in the local database, add a suffix such as 24oct26 to both its username and email.
+
+6. Prepare two browser sessions. Sign in as kindvoice_demo in the main browser. Sign in as community_demo in an incognito window, another browser, or a second device. Separate sessions let both users stay online for live chat.
+
+To demo the private case queue, add the presenter account's email to SAFETY_MODERATOR_EMAILS in backend/.env, restart the backend, then sign in again as kindvoice_demo. Do not place real secrets in the demo file or presentation.
+
+7. Create a safe parent post from community_demo. Use the caption below. Keep this post available for the comment and chat demonstrations.
+
+Our student team is testing ways to make online discussions safer. We welcome practical ideas and respectful feedback.
+
+8. Follow community_demo from kindvoice_demo. Open Explore, search community_demo, open the profile, and select Follow. Use the profile Message button once to confirm direct messaging works.
+
+COPY-AND-PASTE DEMO CONTENT
+
+Safe post caption
+Small ideas grow when people feel safe enough to share them. Let's build online spaces where disagreement stays respectful.
+
+Safe comment
+Thanks for sharing this. What would you improve next?
+
+Safety-check text
+You are stupid. Nobody likes you.
+
+Cyber scam scanner text
+Urgent: Your e-Challan is overdue. Pay now, within 2 hours. Traffic police will block your vehicle. Download eChallan.apk from https://example.invalid/update.
+
+Expected scanner signals
+e-Challan theme, APK/app install, suspicious URL, urgent deadline, official identity, and payment request should appear as separate signals.
+The result should link to the CERT-In advisory, official Parivahan portal, Chakshu, and NCRP suspect lookup.
+The result is a rule-based advisory, not proof that a message is fraudulent.
+
+Lost-money action
+Select "Money has left my account" before scanning. The result should show the 1930 call link and National Cyber Crime Reporting Portal.
+
+Credential exposure action
+Select "I shared an OTP, PIN, or password" before scanning. The result should tell the user to contact the affected bank or service through an official channel, change exposed credentials from a trusted device, review account activity, and call 1930 if an unauthorised transaction appears.
+
+Private case summary
+I received an SMS claiming traffic police action for an overdue e-Challan. It demanded payment within two hours and linked to an APK. I did not install the file or share account information.
+
+Private evidence file
+Attach the synthetic fake e-Challan screenshot used for the scanner demo. Do not use real messages, phone numbers, names, account details, or intimate images.
+
+Expected phrase signals
+Matched wording: stupid and Nobody likes you.
+Insult: 100 percent.
+Harassment: 100 percent.
+Threat: 0 percent.
+The category values are rule-based signals, not model probabilities.
+
+Kind rewrite for editing
+I disagree with this idea. Let's compare the evidence and improve the proposal.
+
+Safe chat message
+Hi, I am presenting Pehra tomorrow. Which safety feature stood out to you?
+
+Toxic chat test
+You are stupid. Nobody likes you.
+
+Image OCR text
+You are stupid.
+
+Voice test script
+You are stupid. Nobody likes you.
+
+Create an OCR image in Paint. Use a plain white background, large dark letters, and save as PNG or JPEG. Keep the text centered and easy to read. The post composer accepts JPEG, PNG, or WEBP files, up to 3 MB each and five images per post.
+
+8-MINUTE LIVE DEMO FLOW
+
+0:00 to 0:25. Open Home and introduce the problem.
+Say: "Pehra adds a safety check before a harmful post reaches the community. The platform also helps teams review chat behavior and repeated violations."
+
+0:25 to 1:20. Show the pre-post safety check.
+Open Create. Paste the safety-check text and select Share Post. Show the matched wording, score, and insult, harassment, and threat signals. Select Edit Message. Replace the wording with the kind rewrite. Submit the respectful version.
+
+1:20 to 2:00. Show image OCR.
+Open Create again. Upload the prepared PNG or JPEG. Add a neutral caption. Select Share Post. Wait for the OCR result. Point to the recognized wording and its marked match. Close the modal after reading OCR. Keep this toxic image unpublished.
+
+2:00 to 3:00. Show the India-first cyber safety scan.
+Open Safety. Paste the cyber scam scanner text. Show the APK, link, and official identity signals. Explain that Pehra does not open the URL and a no-match result does not prove safety. Select "Money has left my account" only when showing the urgent 1930 response. Open an official reporting link.
+
+3:00 to 4:15. Show messaging.
+From the community_demo profile, select Message. Send the safe chat message. Confirm its arrival in the second browser without refreshing. Send the toxic chat test from community_demo. Show the warning, then choose Edit Message and send the kind rewrite.
+
+4:15 to 5:25. Show repeat-offender tracking.
+Before the event, use pattern_demo to record two toxic post or comment findings. Confirm the Behaviour page shows two warnings. During the live demo, record the third finding. Refresh Behaviour and show the 24-hour mute banner. Try one more post to show the blocked action. Run this step last for pattern_demo.
+
+5:25 to 6:10. Show Notifications and Analytics.
+Open Notifications and show the moderation alert. Open Analytics and refresh. Explain the totals refer to comments and update after background moderation finishes.
+
+6:10 to 7:00. Show the Safety Center reporting paths and case workflow.
+Open Chakshu and point to the official NCRP link. Prepare a factual report preview, consent to share it with Pehra, submit it, then add the prepared fake e-Challan screenshot as private evidence. Open the moderator queue, review the evidence and action history, then mark the case under review. Explain Pehra does not submit a complaint automatically or connect to Pratibimb.
+
+7:00 to 8:00. Close with scope and next step.
+Say: "Pehra helps people pause before harmful posts, checks suspicious messages for explainable signals, and guides users to official Indian reporting channels. Our next step is a measured pilot with students and safety reviewers."
+
+FULL REHEARSAL CHECKLIST
+
+AUTHENTICATION
+1. Register each demo account.
+2. Log out and log in with its email and password.
+3. Reload the browser. Confirm the signed-in session remains active.
+
+FEED AND PROFILES
+1. Create the safe post.
+2. Select Like. Select Unlike, then Like again.
+3. Add the safe comment.
+4. Search community_demo in Explore.
+5. Follow and unfollow the profile. Open Followers and Following lists.
+6. Use the profile Message button to open chat.
+7. Toggle light and dark mode. Check text, buttons, and warning colors in both modes.
+
+TEXT MODERATION
+1. Open Create and paste the safety-check text.
+2. Confirm the modal marks the matched wording and shows category signals.
+3. Choose Edit Message and submit the kind rewrite.
+4. Repeat and choose Cancel. Confirm the post does not publish.
+5. Repeat with Post Anyway using pattern_demo. Wait for background moderation to change the post from pending to flagged and apply blur to the post.
+
+COMMENTS AND NOTIFICATIONS
+1. Add the safety-check text as a comment on the safe parent post while signed in as pattern_demo.
+2. Wait for the comment status and open Notifications.
+3. Confirm a moderation alert appears. Confirm the comment text is blurred.
+4. Open Analytics and select Refresh after the moderation task finishes.
+
+IMAGE OCR
+1. Upload the prepared image in Create.
+2. Confirm the modal reads "You are stupid" and marks the matched word.
+3. Check the verification message if Tesseract is unavailable or the image text is unclear.
+4. Confirm a neutral image leaves the toxic warning hidden.
+
+PRIVATE SAFETY CASE
+1. Submit the private case summary above with explicit consent.
+2. Open the case details and add the synthetic e-Challan screenshot as evidence with separate consent.
+3. Sign in as an allowlisted moderator and open the safety queue.
+4. Review the case summary, download the evidence, then check the recorded evidence access event.
+5. Mark the case under review. Return to the reporter account and confirm the status and public action history appear.
+6. Resolve or close a case in rehearsal to confirm the reporter can request another review. Test this with demo data only.
+
+CHAT
+1. Keep both browser sessions signed in.
+2. Send a safe message. Confirm the message appears for both users without a page refresh.
+3. Send the toxic chat test from community_demo.
+4. Choose Edit Message and enter the kind rewrite.
+5. Check the warning, pending state, delivered message, and behavior count.
+6. Use Send Anyway only with the repeat-offender test account. A third finding mutes the account.
+
+VOICE
+1. Record a short WAV, MP3, M4A, OGG, or WEBM clip using the voice test script.
+2. Select the microphone button in Chat and upload the clip.
+3. Confirm a transcript appears for review and its wording receives a safety check.
+4. Do not rely on voice during the live slot until a real Groq transcription request succeeds.
+5. Audio uploads must stay under 20 MB. The transcript is shown before sending.
+
+REPEAT-OFFENDER MUTE
+1. Use pattern_demo only.
+2. Record two toxic post or comment findings during rehearsal. Wait for Behaviour to show warning count 2.
+3. During the live slot, record the third finding.
+4. Refresh Behaviour. Confirm warning count 3 and a mute expiry about 24 hours ahead.
+5. Attempt one more post. Confirm the app blocks the action.
+6. Leave this account muted after the demo. Keep this account out of the safe chat session.
+
+MONGODB PERSISTENCE CHECK
+
+Open a new terminal and run:
+
+mongosh "mongodb://localhost:27017/social_media"
+
+Then run these read-only checks:
+
+db.users.find({username: /demo/}, {username: 1, email: 1}).toArray()
+db.posts.find({}, {caption: 1, moderation_status: 1, is_blurred: 1}).sort({created_at: -1}).limit(5).toArray()
+db.comments.find({}, {text: 1, moderation_status: 1, is_blurred: 1}).sort({created_at: -1}).limit(5).toArray()
+db.messages.find({}, {content: 1, delivery_status: 1}).sort({created_at: -1}).limit(5).toArray()
+db.user_behaviour.find({}, {warning_count: 1, mute_until: 1}).toArray()
+
+Close mongosh with exit. Do not paste credentials, tokens, or API keys into the event presentation.
+
+DEMO DAY BACKUP PLAN
+
+If the rewrite provider fails, show the marked wording and enter the kind rewrite by hand.
+If Groq voice transcription fails, explain the transcript review step and skip the microphone demo.
+If OCR reads poorly, use the large, high-contrast PNG prepared in advance.
+If the model reports a low score for the safety-check text, use the exact matched wording shown by the phrase check and explain the rule-based signal.
+If the chat socket disconnects, confirm both API and frontend terminals remain active, then reconnect both browser sessions.
+If a moderation result still shows pending, allow the background check to finish before opening Analytics.
+Keep the safe account available in a separate browser. Do not use pattern_demo for the main chat demo.
+
+HONEST FEATURE DESCRIPTION
+
+The local text model is binary. Category percentages come from phrase rules, not a multi-label probability model. OCR detects readable text, not image meaning. Voice moderation checks a provider transcript. Post and comment moderation finish in a background task, so their status often stays pending briefly. Analytics counts comments. The Behaviour page records server-confirmed moderation findings and applies a 24-hour mute from the third finding.

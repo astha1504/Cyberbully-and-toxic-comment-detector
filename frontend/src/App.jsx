@@ -17,6 +17,9 @@ const Explore = lazy(() => import('./pages/Explore'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const UserBehaviour = lazy(() => import('./pages/UserBehaviour'));
+const SafetyCenter = lazy(() => import('./pages/SafetyCenter'));
+const SafetyModeratorQueue = lazy(() => import('./pages/SafetyModeratorQueue'));
+const Landing = lazy(() => import('./pages/Landing'));
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -45,7 +48,7 @@ const AppLayout = ({ children }) => {
 };
 
 const AppRoutes = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   return (
     <Suspense fallback={<div className="page-loading"><div className="spinner" /></div>}>
@@ -61,11 +64,13 @@ const AppRoutes = () => {
       <Route
         path="/"
         element={
-          <ProtectedRoute>
+          loading ? (
+            <div className="page-loading"><div className="spinner" /></div>
+          ) : user ? (
             <AppLayout>
               <Home />
             </AppLayout>
-          </ProtectedRoute>
+          ) : <Landing />
         }
       />
       <Route
@@ -134,6 +139,26 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <AppLayout>
               <UserBehaviour />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/safety"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SafetyCenter />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/safety/moderation"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SafetyModeratorQueue />
             </AppLayout>
           </ProtectedRoute>
         }

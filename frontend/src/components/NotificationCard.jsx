@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 import './NotificationCard.css';
 
 const iconMap = {
-  like:    { Icon: Heart,         color: '#C56E5A' },
-  comment: { Icon: MessageCircle, color: '#8FA68E' },
-  follow:  { Icon: UserPlus,      color: '#D4A373' },
+  like:    { Icon: Heart,         color: '#2563EB' },
+  comment: { Icon: MessageCircle, color: '#0F9F79' },
+  follow:  { Icon: UserPlus,      color: '#7C62D6' },
   MODERATION_ALERT: { Icon: AlertTriangle, color: '#FF3B30' },
   default: { Icon: Bell,          color: '#6B7280' },
 };
@@ -65,10 +65,7 @@ const NotificationCard = ({ notif, onRead }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <img
-            src={
-              notif.actor_profile_picture ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${notif.actor_name || 'System'}`
-            }
+            src={notif.actor_profile_picture || '/placeholder-avatar.svg'}
             alt={notif.actor_name || 'System'}
             className="notif-avatar"
           />

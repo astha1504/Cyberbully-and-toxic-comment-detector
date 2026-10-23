@@ -5,11 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/Post/PostCard';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus } from 'lucide-react';
+import { ArrowUpRight, Plus, ShieldCheck, Sparkles, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Home.css';
 
-const FALLBACK_AVATAR = 'https://ui-avatars.com/api/?background=C56E5A&color=fff&name=User';
+const FALLBACK_AVATAR = '/placeholder-avatar.svg';
 
 const Home = () => {
   const { user } = useAuth();
@@ -77,10 +77,9 @@ const Home = () => {
     }
   };
 
-  const getAvatarUrl = (profilePicture, name) => {
+  const getAvatarUrl = (profilePicture) => {
     if (profilePicture && profilePicture.startsWith('http')) return profilePicture;
-    const displayName = name || 'User';
-    return `https://ui-avatars.com/api/?background=C56E5A&color=fff&name=${encodeURIComponent(displayName)}`;
+    return FALLBACK_AVATAR;
   };
 
   if (loading) {
@@ -94,9 +93,9 @@ const Home = () => {
   if (error) {
     return (
       <div className="page-loading">
-        <div style={{ textAlign: 'center', color: '#C56E5A' }}>
+        <div className="home-load-error">
           <p>{error}</p>
-          <button onClick={fetchData} style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', borderRadius: '8px', background: '#C56E5A', color: '#fff', border: 'none', cursor: 'pointer' }}>
+          <button onClick={fetchData} className="home-retry-button">
             Retry
           </button>
         </div>
@@ -106,14 +105,39 @@ const Home = () => {
 
   return (
     <div className="home-page">
+      <section className="home-welcome">
+        <div className="home-welcome-copy">
+          <span className="home-eyebrow"><Sparkles size={14} /> PEHRA COMMUNITY</span>
+          <h1>Make room for better conversations.</h1>
+          <p>Share what matters, connect with your community, and keep care at the heart of every interaction.</p>
+        </div>
+        <div className="home-welcome-actions">
+          <Link to="/create" className="home-primary-action"><Plus size={17} /> Start a post</Link>
+          <Link to="/safety" className="home-secondary-action"><ShieldCheck size={17} /> Check a message <ArrowUpRight size={14} /></Link>
+        </div>
+        <div className="home-welcome-orb home-welcome-orb-one" />
+        <div className="home-welcome-orb home-welcome-orb-two" />
+      </section>
+
+      <Link to="/safety" className="home-safety-strip">
+        <span className="home-safety-icon"><ShieldCheck size={19} /></span>
+        <span className="home-safety-copy"><strong>Unsure about a message?</strong><small>Check a suspicious text, screenshot, or voice note in the Safety Center.</small></span>
+        <ArrowUpRight size={17} />
+      </Link>
+
+      <div className="home-feed-title-row">
+        <div><span className="home-section-kicker">YOUR COMMUNITY</span><h2>Community feed</h2></div>
+        <Link to="/create" className="home-feed-create"><Plus size={15} /> New post</Link>
+      </div>
       <div className="feed-container">
         <div className="feed-main">
           {posts.length === 0 ? (
             <div className="empty-feed">
-              <div className="empty-icon">📷</div>
-              <h3>No Posts Yet</h3>
-              <p>Follow some people or create your first post!</p>
-              <Link to="/create" className="create-first-btn">Create Post</Link>
+              <div className="empty-icon"><Sparkles size={22} /></div>
+              <span className="home-section-kicker">A FRESH START</span>
+              <h3>Your feed is ready for a first hello.</h3>
+              <p>Follow people whose ideas you value, or share something with your community.</p>
+              <Link to="/create" className="create-first-btn">Create your first post <ArrowUpRight size={15} /></Link>
             </div>
           ) : (
             posts.map((post) => (
@@ -163,7 +187,7 @@ const Home = () => {
                        <div>
                          <span className="suggestion-name">{s.username}</span>
                         <span className="suggestion-bio">
-                          {s.bio || 'New to Socialite'}
+                          {s.bio || 'New to Pehra'}
                         </span>
                       </div>
                     </Link>

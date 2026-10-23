@@ -14,6 +14,12 @@ mongosh --eval "db.runCommand({ ping: 1 })"
 
 
 
+Test RUN -
+
+Run from backend: python -m unittest discover -s tests -v
+Run from frontend: npm test
+
+
 
 DONE - Live intervention and choices: Start writing a clearly insulting test message, such as “you are stupid,” in a post, comment, or chat composer. Wait for the suggestion as you type. Submit it and check the warning, highlighted wording, and Post anyway, Edit, and Cancel choices. Try a neutral message too; it should not show the same warning.
 
@@ -28,3 +34,11 @@ Word highlighting: Use a test message containing a phrase the detector recognize
 Image OCR: Upload a JPEG, PNG, or WEBP image containing large, readable text that would be flagged if typed into a message. Submit it and check for an OCR warning that identifies text from the image. OCR checks text in the image; it does not determine whether the image’s visual content is harmful. If OCR doesn’t run, check that tesseract --version works in PowerShell.
 
 Voice: This requires GROQ_API_KEY in backend/.env. Use the voice-note upload control in chat and select a supported audio file. Check that it produces an editable transcript, then test sending it. Audio is sent to Groq for transcription, so this feature won’t work without the key.
+
+
+
+The standout demo should scan a suspicious SMS, WhatsApp message, screenshot, or voice note. It explains warning signs such as urgent KYC demands, OTP or UPI PIN requests, fake government or bank identity, APK downloads, and threatening “digital arrest” calls. It then gives a specific next step. CERT-In has warned about fake e-Challan messages used to spread Android malware, so this makes a timely demo scenario. CERT-In advisory
+Show one complete flow: scan a fake e-Challan message, highlight its suspicious APK link and urgency, explain the risk, then guide the user to official reporting options. Financial fraud should point to 1930 and the National Cyber Crime Reporting Portal. Suspected fraud calls, SMS, and WhatsApp messages should point to Sanchar Saathi’s Chakshu service. National Cyber Crime Reporting Portal, DoT’s Chakshu information
+Build the scan with English and Hindi first, then add regional languages. Show the exact signals behind each risk result. Treat results as warnings, never proof. The official NCRP suspect search itself cautions that reports may be incomplete or inaccurate, so a missing match must not imply safety. NCRP suspect search
+For startup readiness, add a private moderator queue with case IDs, evidence access controls, action history, user appeals, and report status. Minimize sensitive data collection and define deletion rules. Keep Pratibimb as law-enforcement context, since MHA describes it as part of I4C’s Samanvaya platform for agency use. MHA description
+This gives judges a concrete story: Pehra spots a likely scam, explains why, helps a person respond, and routes them to the right official service. The current Safety Center provides links and report preparation. The scam scan and case workflow are the next features I recommend building.

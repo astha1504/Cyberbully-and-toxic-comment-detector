@@ -5,6 +5,7 @@ from ..database import users_collection
 from ..models.user import UserResponse
 from ..routes.auth import get_current_user
 from ..services.auth_service import verify_password, get_password_hash
+from ..services.safety_access import is_safety_moderator
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -62,6 +63,7 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
         user.pop("password", None)
         user["followers"] = len(user.get("followers", []))
         user["following"] = len(user.get("following", []))
+        user["is_safety_moderator"] = is_safety_moderator(user)
     return user
 
 @router.get("/profile/{user_id}")

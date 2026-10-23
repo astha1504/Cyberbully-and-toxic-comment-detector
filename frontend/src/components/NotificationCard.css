@@ -19,7 +19,7 @@
 
 .notif-card.unread {
   border-left: 3px solid var(--primary);
-  background: linear-gradient(to right, rgba(197,110,90,0.04), var(--card));
+  background: linear-gradient(to right, rgba(var(--primary-rgb),0.04), var(--card));
 }
 
 /* ─── Unread dot ─────────────────────────────────────────────────────── */

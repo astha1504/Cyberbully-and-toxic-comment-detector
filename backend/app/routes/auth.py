@@ -5,6 +5,7 @@ from ..config import settings
 from ..database import users_collection
 from ..models.user import UserCreate, UserResponse, Token, TokenData
 from ..services.auth_service import verify_password, get_password_hash, create_access_token
+from ..services.safety_access import is_safety_moderator
 from datetime import timedelta
 from bson import ObjectId
 
@@ -52,6 +53,7 @@ async def register(user_in: UserCreate):
     created_user.pop("password", None)
     created_user["followers"] = len(created_user.get("followers", []))
     created_user["following"] = len(created_user.get("following", []))
+    created_user["is_safety_moderator"] = is_safety_moderator(created_user)
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -86,4 +88,5 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
         user.pop("password", None)
         user["followers"] = len(user.get("followers", []))
         user["following"] = len(user.get("following", []))
+        user["is_safety_moderator"] = is_safety_moderator(user)
     return user

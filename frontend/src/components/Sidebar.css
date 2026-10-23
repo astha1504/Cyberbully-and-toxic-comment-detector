@@ -155,7 +155,7 @@
 .sidebar-follow-btn:hover {
   background: var(--primary-h);
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(197,110,90,0.3);
+  box-shadow: 0 3px 8px rgba(var(--primary-rgb),0.25);
 }
 
 /* ─── Trending ───────────────────────────────────────────────────────── */
@@ -177,7 +177,7 @@
 }
 
 .sidebar-trend-item:hover {
-  background: rgba(197,110,90,0.08);
+  background: rgba(var(--primary-rgb),0.08);
 }
 
 .sidebar-trend-tag {

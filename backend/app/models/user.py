@@ -32,6 +32,7 @@ class UserResponse(UserBase):
     id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")
     followers: int = 0
     following: int = 0
+    is_safety_moderator: bool = False
 
     model_config = {
         "populate_by_name": True,

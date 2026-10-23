@@ -2,6 +2,7 @@ import asyncio
 import base64
 import binascii
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -56,6 +57,10 @@ async def extract_text_from_image_data(image_data: str) -> str:
     if not command:
         raise RuntimeError("Tesseract OCR is not installed")
 
+    languages = os.getenv("TESSERACT_LANG", "eng").strip()
+    if not re.fullmatch(r"[A-Za-z0-9_]+(?:\+[A-Za-z0-9_]+)*", languages):
+        raise RuntimeError("TESSERACT_LANG must be a plus-separated list of language codes")
+
     with tempfile.TemporaryDirectory(prefix="cyberbully_ocr_") as temp_dir:
         image_path = Path(temp_dir) / f"upload{extension}"
         image_path.write_bytes(image_bytes)
@@ -63,6 +68,8 @@ async def extract_text_from_image_data(image_data: str) -> str:
             command,
             str(image_path),
             "stdout",
+            "-l",
+            languages,
             "--psm",
             "6",
             stdout=asyncio.subprocess.PIPE,

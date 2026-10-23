@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { registerUser } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { ArrowUpRight, Eye, EyeOff, HeartHandshake, ShieldCheck, ScanSearch, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import BrandLockup from '../components/BrandLockup';
 import './Auth.css';
 
 const Register = () => {
@@ -46,87 +47,59 @@ const Register = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-bg-shapes">
-        <div className="shape shape-1"></div>
-        <div className="shape shape-2"></div>
-        <div className="shape shape-3"></div>
-      </div>
-      <motion.div
-        className="auth-container"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1 className="auth-logo">Socialite</h1>
-            <p className="auth-subtitle">Sign up to share moments with friends</p>
+      <section className="auth-story-panel">
+        <div className="auth-story-content">
+          <BrandLockup light />
+          <div className="auth-story-message">
+            <span className="auth-eyebrow"><span /> DIGITAL SAFETY, BUILT FOR PEOPLE</span>
+            <h1>Good communities make space for everyone.</h1>
+            <p>Join a community built around thoughtful conversations, clearer signals, and practical safety support.</p>
+            <div className="auth-feature-list">
+              <div className="auth-feature"><span><ShieldCheck size={18} /></span><div><strong>Pause before you post</strong><small>Review a message and choose how to respond.</small></div></div>
+              <div className="auth-feature"><span><ScanSearch size={18} /></span><div><strong>Understand scam signals</strong><small>Check suspicious texts, screenshots, and voice notes.</small></div></div>
+              <div className="auth-feature"><span><HeartHandshake size={18} /></span><div><strong>Keep communities thoughtful</strong><small>Build better conversations with people around you.</small></div></div>
+            </div>
           </div>
-          <form className="auth-form" onSubmit={handleSubmit} id="register-form">
-            <div className="input-group">
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="auth-input"
-                id="register-name"
-              />
-            </div>
-            <div className="input-group">
-              <input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="auth-input"
-                id="register-email"
-              />
-            </div>
-            <div className="input-group">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="auth-input"
-                id="register-password"
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <motion.button
-              type="submit"
-              className="auth-btn"
-              disabled={loading}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              id="register-submit"
-            >
-              {loading ? (
-                <div className="spinner"></div>
-              ) : (
-                <>
-                  <UserPlus size={18} />
-                  <span>Sign Up</span>
-                </>
-              )}
-            </motion.button>
-          </form>
-          <div className="auth-divider">
-            <span>OR</span>
-          </div>
-          <p className="auth-switch">
-            Already have an account?{' '}
-            <Link to="/login" className="auth-link">Log in</Link>
-          </p>
+          <div className="auth-story-footer"><span><i /> A calmer corner of the internet</span><span>PEHRA · INDIA FIRST</span></div>
         </div>
-      </motion.div>
+        <div className="auth-orbit auth-orbit-one" /><div className="auth-orbit auth-orbit-two" />
+        <div className="auth-hero-shield"><ShieldCheck size={68} strokeWidth={1.2} /></div>
+      </section>
+
+      <section className="auth-panel">
+        <div className="auth-mobile-brand"><BrandLockup compact /></div>
+        <motion.div className="auth-container" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+          <div className="auth-card">
+            <div className="auth-header">
+              <span className="auth-form-kicker">START YOUR ACCOUNT</span>
+              <h2>Join your community</h2>
+              <p className="auth-subtitle">Create your Pehra account.</p>
+            </div>
+            <form className="auth-form" onSubmit={handleSubmit} id="register-form">
+              <label className="auth-field" htmlFor="register-name"><span>Full name</span>
+                <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="auth-input" id="register-name" autoComplete="name" />
+              </label>
+              <label className="auth-field" htmlFor="register-email"><span>Email address</span>
+                <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className="auth-input" id="register-email" autoComplete="email" />
+              </label>
+              <label className="auth-field" htmlFor="register-password"><span>Password</span>
+                <div className="input-group">
+                  <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="auth-input" id="register-password" autoComplete="new-password" />
+                  <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                <small className="auth-field-hint">Use at least 6 characters.</small>
+              </label>
+              <motion.button type="submit" className="auth-btn" disabled={loading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} id="register-submit">
+                {loading ? <div className="spinner" /> : <><UserPlus size={17} /><span>Sign Up</span><ArrowUpRight size={17} /> </>}
+              </motion.button>
+            </form>
+            <p className="auth-switch">Already have an account? <Link to="/login" className="auth-link">Sign in</Link></p>
+            <p className="auth-privacy-note"><ShieldCheck size={14} /> A safer community starts with people like you.</p>
+          </div>
+        </motion.div>
+      </section>
     </div>
   );
 };

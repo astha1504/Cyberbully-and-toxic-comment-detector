@@ -43,7 +43,7 @@ const Sidebar = () => {
         <div className="sidebar-user-card">
           <Link to={`/profile/${user.id}`} className="sidebar-user-row">
             <img
-              src={user.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
+              src={user.profile_picture || '/placeholder-avatar.svg'}
               alt={user.name}
               className="sidebar-avatar"
             />
@@ -73,13 +73,13 @@ const Sidebar = () => {
               >
                 <Link to={`/profile/${s.id}`} className="sidebar-suggestion-info">
                   <img
-                    src={s.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.name}`}
+                    src={s.profile_picture || '/placeholder-avatar.svg'}
                     alt={s.name}
                     className="sidebar-suggestion-avatar"
                   />
                   <div>
                     <span className="sidebar-suggestion-name">{s.name}</span>
-                    <span className="sidebar-suggestion-bio">{s.bio || 'New to Socialite'}</span>
+                    <span className="sidebar-suggestion-bio">{s.bio || 'New to Pehra'}</span>
                   </div>
                 </Link>
                 <button
@@ -116,7 +116,7 @@ const Sidebar = () => {
         </div>
       </div>
 
-      <p className="sidebar-footer">© 2026 Socialite · Privacy · Terms</p>
+      <p className="sidebar-footer">© 2026 Pehra · Privacy · Terms</p>
     </aside>
   );
 };

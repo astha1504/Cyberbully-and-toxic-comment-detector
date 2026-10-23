@@ -5,17 +5,17 @@ export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
 
 // Design Tokens (mirrored from CSS for JS use)
 export const COLORS = {
-  background: '#F8F5F0',
+  background: '#F3F6FB',
   card: '#FFFFFF',
-  primary: '#C56E5A',
-  accent: '#D4A373',
-  secondary: '#8FA68E',
-  text: '#1F2937',
-  muted: '#6B7280',
+  primary: '#2563EB',
+  accent: '#14B8A6',
+  secondary: '#0F766E',
+  text: '#122033',
+  muted: '#64748B',
 };
 
 // App constants
-export const APP_NAME = 'Socialite';
+export const APP_NAME = 'Pehra';
 export const APP_VERSION = '1.0.0';
 
 // Pagination

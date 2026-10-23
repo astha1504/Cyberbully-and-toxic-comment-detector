@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPost } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion } from 'framer-motion';
-import { ImagePlus, X, Send } from 'lucide-react';
+import { ImagePlus, X, Send, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AIInterventionModal from '../components/AIInterventionModal';
 import LiveToxicityHint from '../components/LiveToxicityHint';
@@ -96,7 +96,11 @@ const CreatePost = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h2 className="create-title">Create New Post</h2>
+        <div className="create-heading">
+          <span className="page-eyebrow"><Sparkles size={13} /> COMMUNITY POST</span>
+          <h2 className="create-title">Share something worth sharing</h2>
+          <p>Bring a useful idea, moment, or question to your community.</p>
+        </div>
 
         <form className="create-form" onSubmit={handleSubmit}>
           {/* Image Upload Area */}

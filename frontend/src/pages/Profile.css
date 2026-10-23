@@ -47,7 +47,7 @@
   object-fit: cover;
   border: 3px solid transparent;
   background: linear-gradient(var(--surface-light), var(--surface-light)) padding-box,
-    linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045) border-box;
+    var(--brand-gradient) border-box;
 }
 
 .pic-change-btn {
@@ -246,7 +246,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #833ab4, #fd1d1d);
+  background: var(--brand-gradient);
   color: white;
   padding: 16px;
   text-align: center;

@@ -28,7 +28,7 @@
   object-fit: cover;
   border: 2px solid transparent;
   background: linear-gradient(var(--surface-light), var(--surface-light)) padding-box,
-    linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045) border-box;
+    var(--brand-gradient) border-box;
 }
 
 .post-username {
@@ -217,7 +217,7 @@
   padding: 6px 14px;
   border-radius: 8px;
   border: none;
-  background: #C56E5A;
+  background: var(--primary);
   color: white;
   font-weight: 600;
   font-size: 13px;
@@ -288,7 +288,7 @@
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--primary, #C56E5A);
+  color: var(--primary);
   border-bottom: 1px solid var(--border);
 }
 
@@ -319,7 +319,7 @@
   padding: 6px 12px;
   border-radius: 8px;
   border: none;
-  background: #C56E5A;
+  background: var(--primary);
   color: white;
   font-weight: 600;
   font-size: 12px;

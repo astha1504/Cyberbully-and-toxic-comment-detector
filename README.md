@@ -1,6 +1,6 @@
-# Socialite: AI Cyberbully & Toxic Comment Detector
+# Pehra: Community and Cyber Safety Platform
 
-End-to-end safety analytics: **User Comments → Sequence Classification NLP Model → Real-Time WebSockets → FastAPI Backend → Live React Dashboard**.
+Pehra helps online communities prevent harmful interactions and respond to suspicious cyber messages with explainable checks and practical next steps.
 
 ## Architecture
 
@@ -49,6 +49,9 @@ graph TD
 4. **Chat context**: Chat stores delivered messages and consults the latest 10 messages for repeated toxic behavior by the sender. Blocked attempts retain moderation metadata without storing their text.
 5. **Image OCR**: Tesseract reads text in JPEG, PNG, and WEBP uploads before posting and the backend checks the image again during moderation.
 6. **Voice check**: A selected voice note is transcribed, checked, then opened as editable text before sending as a chat message.
+7. **India-first cyber safety scan**: Scans pasted text, screenshots, and voice notes for explainable fraud signals. Text patterns cover English, Hindi, Hinglish, and selected Marathi, Bengali, Tamil, and Telugu phrases. A fake e-Challan result links to the CERT-In advisory and official Parivahan portal. Suspected fraud calls, SMS, and WhatsApp messages link directly to Chakshu. Financial loss links to 1930 and NCRP. Optional recovery steps cover shared credentials and an installed APK. This is a pattern-based warning, not a probability or confirmation. OCR and voice language coverage depends on installed OCR packs and the configured transcription provider.
+
+Official references: [CERT-In fake e-Challan Android malware advisory](https://www.cert-in.org.in/s2cMainServlet?CACODE=CICA-2026-3492&pageid=PUBADV01), [DoT Chakshu reporting service](https://sancharsaathi.gov.in/sfc/), [NCRP suspect search](https://cybercrime.gov.in/webform/suspect_search_repository.aspx), [official Parivahan e-Challan portal](https://echallan.parivahan.gov.in/).
 
 The bundled text model is binary (`non_offensive` / `toxic`). The insult, harassment, and threat percentages are transparent phrase-match indicators, not calibrated probabilities from a multi-label model. Exact causal word attribution is available only when a known phrase matched.
 
@@ -135,6 +138,17 @@ Note: `backend/model/` is gitignored because model weights are large files. Afte
 | `POST` | `/api/moderation/check-text` | Checks text while composing and returns score, phrase signals, and matched wording |
 | `POST` | `/api/moderation/check-image` | OCRs a base64 image data URI and checks the detected text |
 | `POST` | `/api/moderation/check-audio` | Sends an uploaded audio file to configured Groq transcription, then checks the transcript |
+| `POST` | `/api/cyber-safety/analyze` | Checks a message for explainable scam signals and returns safety guidance and official links |
+| `POST` | `/api/cyber-safety/reports` | Creates a consent-based private safety case |
+| `GET` | `/api/cyber-safety/reports/mine` | Lists the signed-in user's case references and statuses |
+| `GET` | `/api/cyber-safety/reports/queue` | Lists open cases for allowlisted safety moderators |
+| `GET` | `/api/cyber-safety/reports/{report_id}/history` | Lists case actions visible to the reporter or moderator |
+| `GET` | `/api/cyber-safety/reports/{report_id}/evidence` | Lists private evidence metadata for the reporter or moderator |
+| `POST` | `/api/cyber-safety/reports/{report_id}/evidence` | Uploads one consented JPEG, PNG, WEBP, or PDF evidence file |
+| `GET` | `/api/cyber-safety/reports/{report_id}/evidence/{evidence_id}` | Downloads evidence after reporter or moderator access checks |
+| `DELETE` | `/api/cyber-safety/reports/{report_id}/evidence/{evidence_id}` | Lets the reporter remove an evidence file |
+| `PATCH` | `/api/cyber-safety/reports/{report_id}` | Updates a case status and records an internal review note |
+| `POST` | `/api/cyber-safety/reports/{report_id}/appeal` | Requests another review after resolution or closure |
 | `POST` | `/chat/conversation` | Creates a conversation between two users |
 | `GET` | `/chat/conversations` | Retrieves user's conversation list |
 | `GET` | `/chat/messages/{conv_id}` | Retrieves messages for a conversation |
@@ -144,6 +158,14 @@ Note: `backend/model/` is gitignored because model weights are large files. Afte
 | `GET`  | `/posts/` | Feed data query with hydrated authors and comments count |
 | `GET`  | `/analytics/toxic-comments` | Chart metrics representing weekly flagged content trends |
 | `GET`  | `/notifications/` | Real-time fetch of user's personal alerts |
+
+### Private Safety Case Setup
+
+The Safety Center includes a consent-based report form, case tracking, private evidence uploads, and case history. Submitting a case shares the incident category, optional date and state, and summary with Pehra. Evidence upload asks for separate consent. The reporter and allowlisted moderators have app-level access to evidence. The reporter can remove evidence. Each case accepts up to five JPEG, PNG, WEBP, or PDF files, up to 8 MB each. Each account has a 20-file and 40 MB rolling evidence cap. Files receive type and size checks, not malware scanning. Do not upload passwords, OTPs, bank credentials, or intimate images. Case summaries, evidence, and event history expire after 30 days through MongoDB TTL indexes. Pehra does not contact police or government services automatically.
+
+The moderator queue shows case IDs, summaries, evidence, and a case event timeline. Events record report submission, status changes, appeals, and evidence actions. Moderator notes stay hidden from reporters. Events use an append-only application flow and expire with their case. They are not a tamper-proof external audit log.
+
+To enable the moderator queue, add existing moderator account email addresses to `SAFETY_MODERATOR_EMAILS` in `backend/.env`, separated by commas. Restart the backend and sign in again. The Safety Center then shows the restricted queue link. Keep the environment file private.
 
 ### Chat Toxicity Warning Payload
 
@@ -201,13 +223,21 @@ Open http://localhost:5173, log into your profile, and test posting an abusive k
 
 ## Tests
 
-```bash
+Backend tests use in-memory MongoDB stand-ins. They do not connect to the configured database, load model weights, or call external AI providers.
+
+```powershell
 cd backend
-pytest tests/ -v
-pytest tests/ --cov=app --cov-report=term-missing
+python -m unittest discover -s tests -v
 ```
 
-Covers: ML pipeline fallback testing, background task integration, WebSocket payloads, toxicity keyword exact matching, and missing field validation.
+Frontend component and service tests use Vitest and jsdom.
+
+```powershell
+cd frontend
+npm test
+```
+
+Covers API route behavior, auth and password rules, post and comment moderation, rewrite failures, OCR and audio inputs, chat history and delivery, mute escalation, notifications, analytics, context providers, toxicity warnings, session handling, and API error messages.
 
 ## Data Structure (read-only)
 

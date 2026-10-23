@@ -196,9 +196,9 @@ const AIInterventionModal = ({ isOpen, onClose, onConfirm, onEdit, text = '', im
   };
 
   const getSeverityColor = (severity) => {
-    if (severity === 'High') return '#ef4444';
-    if (severity === 'Medium') return '#f59e0b';
-    return '#eab308';
+    if (severity === 'High') return '#b91c1c';
+    if (severity === 'Medium') return '#b45309';
+    return '#a16207';
   };
 
   const categoryScores = {

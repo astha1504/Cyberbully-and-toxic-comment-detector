@@ -1,111 +1,168 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Activity, BarChart3, Bell, ChevronDown, Compass, Home, LogOut,
+  MessageCircle, Moon, Plus, ShieldCheck, Sun, User
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSocket } from '../../context/SocketContext';
-import {
-  Home, PlusSquare, Bell, MessageCircle,
-  User, LogOut, Sun, Moon, Compass, BarChart2, Activity
-} from 'lucide-react';
+import BrandLockup from '../BrandLockup';
 import './Navbar.css';
+
+const NAV_ITEMS = [
+  { path: '/', icon: Home, label: 'Home', section: 'Community' },
+  { path: '/explore', icon: Compass, label: 'Explore', section: 'Community' },
+  { path: '/create', icon: Plus, label: 'Create post', section: 'Community', emphasis: true },
+  { path: '/chat', icon: MessageCircle, label: 'Messages', section: 'Community' },
+  { path: '/notifications', icon: Bell, label: 'Notifications', section: 'Community' },
+  { path: '/safety', icon: ShieldCheck, label: 'Safety center', section: 'Safety & insights' },
+  { path: '/behaviour', icon: Activity, label: 'My behaviour', section: 'Safety & insights' },
+  { path: '/analytics', icon: BarChart3, label: 'Analytics', section: 'Safety & insights' },
+];
+
+const MOBILE_ITEMS = ['/', '/explore', '/create', '/chat', '/safety'];
+
+const getPageName = (pathname) => {
+  if (pathname.startsWith('/safety')) return 'Safety center';
+  if (pathname.startsWith('/profile')) return 'Your profile';
+  return NAV_ITEMS.find((item) => item.path === pathname)?.label || 'Community';
+};
+
+const Avatar = ({ user, small = false }) => {
+  const name = user?.username || user?.name || 'Member';
+  const initials = name.split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+  if (user?.profile_picture) {
+    return <img className={`nav-avatar${small ? ' small' : ''}`} src={user.profile_picture} alt="" />;
+  }
+  return <span className={`nav-avatar nav-avatar-initials${small ? ' small' : ''}`} aria-hidden="true">{initials || <User size={16} />}</span>;
+};
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { notifications } = useSocket();
+  const { notifications = [] } = useSocket();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unreadCount = notifications.filter((item) => !item.is_read).length;
+  const currentPage = getPageName(location.pathname);
+  const profilePath = `/profile/${user?.id}`;
+
+  const isActive = (item) => item.path === '/safety'
+    ? location.pathname.startsWith('/safety')
+    : item.path === '/profile'
+      ? location.pathname.startsWith('/profile')
+      : location.pathname === item.path;
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
-
-  const navItems = [
-    { path: '/',                    icon: Home,         label: 'Home' },
-    { path: '/explore',             icon: Compass,      label: 'Explore' },
-    { path: '/create',              icon: PlusSquare,   label: 'Create' },
-    { path: '/notifications',       icon: Bell,         label: 'Notifications', badge: unreadCount },
-    { path: '/chat',                icon: MessageCircle,label: 'Messages' },
-    { path: '/analytics',           icon: BarChart2,    label: 'Analytics' },
-    { path: '/behaviour',           icon: Activity,     label: 'Behaviour' },
-    { path: `/profile/${user?.id}`, icon: User,         label: 'Profile' },
-  ];
+  const renderLink = (item, mobile = false) => {
+    const Icon = item.icon;
+    const active = isActive(item);
+    return (
+      <Link
+        key={item.path}
+        to={item.path === '/profile' ? profilePath : item.path}
+        className={`${mobile ? 'mobile-nav-link' : 'nav-link'}${active ? ' active' : ''}${item.emphasis ? ' nav-link-emphasis' : ''}`}
+        id={!mobile ? `nav-${item.label.toLowerCase().replaceAll(' ', '-')}` : undefined}
+        aria-current={active ? 'page' : undefined}
+        aria-label={mobile ? item.label : undefined}
+        title={mobile ? item.label : undefined}
+        onClick={() => mobile && setMobileOpen(false)}
+      >
+        <span className={mobile ? 'mobile-icon-wrapper' : 'nav-icon-wrapper'}>
+          <Icon size={19} strokeWidth={active ? 2.25 : 1.9} />
+          {item.label === 'Notifications' && unreadCount > 0 && <span className="nav-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+        </span>
+        <span className={mobile ? 'mobile-nav-label' : 'nav-label'}>{item.label}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <nav className="navbar-sidebar" id="main-navbar">
-        <div className="navbar-logo">
-          <Link to="/">
-            <span className="logo-text">Socialite</span>
-          </Link>
+      <aside className="navbar-sidebar" id="main-navbar" aria-label="Main navigation">
+        <Link className="navbar-logo" to="/" aria-label="Pehra home">
+          <BrandLockup />
+        </Link>
+
+        <div className="navbar-scroll-area">
+          {['Community', 'Safety & insights'].map((section) => (
+            <section className="navbar-section" key={section}>
+              <h2 className="nav-section-title">{section}</h2>
+              <ul className="navbar-links">
+                {NAV_ITEMS.filter((item) => item.section === section).map((item) => (
+                  <li key={item.path}>{renderLink(item)}</li>
+                ))}
+              </ul>
+            </section>
+          ))}
         </div>
 
-        <ul className="navbar-links">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  className={`nav-link ${isActive ? 'active' : ''}`}
-                  id={`nav-${item.label.toLowerCase()}`}
-                >
-                  <div className="nav-icon-wrapper">
-                    <Icon size={24} />
-                    {item.badge > 0 && (
-                      <span className="nav-badge">{item.badge}</span>
-                    )}
-                  </div>
-                  <span className="nav-label">{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="sidebar-safety-card">
+          <span className="sidebar-safety-icon"><ShieldCheck size={17} /></span>
+          <strong>Something feel off?</strong>
+          <p>Check a suspicious message before you respond.</p>
+          <Link to="/safety">Open safety center <span aria-hidden="true">↗</span></Link>
+        </div>
 
         <div className="navbar-bottom">
-          <button className="nav-link theme-toggle" onClick={toggleTheme} id="theme-toggle-btn">
-            <div className="nav-icon-wrapper">
-              {theme === 'light' ? <Moon size={24} /> : <Sun size={24} />}
-            </div>
-            <span className="nav-label">{theme === 'light' ? 'Dark' : 'Light'} Mode</span>
-          </button>
-          <button className="nav-link logout-btn" onClick={handleLogout} id="logout-btn">
-            <div className="nav-icon-wrapper">
-              <LogOut size={24} />
-            </div>
-            <span className="nav-label">Log out</span>
-          </button>
+          <Link className={`nav-link profile-nav-link${isActive({ path: '/profile' }) ? ' active' : ''}`} to={profilePath} id="nav-profile">
+            <Avatar user={user} small />
+            <span className="profile-nav-copy"><strong>{user?.username || user?.name || 'Your profile'}</strong><small>View your profile</small></span>
+            <ChevronDown size={15} className="profile-chevron" />
+          </Link>
+          <div className="nav-utility-row">
+            <button className="nav-utility-button" onClick={toggleTheme} id="theme-toggle-btn" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+              {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
+              <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
+            </button>
+            <button className="nav-utility-button logout-button" onClick={handleLogout} id="logout-btn" aria-label="Log out">
+              <LogOut size={17} />
+            </button>
+          </div>
         </div>
+      </aside>
+
+      <header className="app-topbar">
+        <div className="mobile-brand"><BrandLockup compact /></div>
+        <div className="topbar-context">
+          <span className="topbar-kicker">COMMUNITY SAFETY WORKSPACE</span>
+          <span className="topbar-title">{currentPage}</span>
+        </div>
+        <div className="topbar-actions">
+          <Link className="topbar-scan-link" to="/safety"><ShieldCheck size={17} /><span>Scan a message</span></Link>
+          <button className="topbar-theme-button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+          <Link className="topbar-user" to={profilePath} aria-label="Open your profile"><Avatar user={user} small /></Link>
+        </div>
+      </header>
+
+      <nav className="navbar-mobile" id="mobile-navbar" aria-label="Mobile navigation">
+        {MOBILE_ITEMS.map((path) => {
+          const item = path === '/profile' ? { path, icon: User, label: 'Profile' } : NAV_ITEMS.find((candidate) => candidate.path === path);
+          return renderLink(item, true);
+        })}
+        <button className={`mobile-nav-link mobile-more-button${mobileOpen ? ' active' : ''}`} type="button" onClick={() => setMobileOpen((open) => !open)} aria-expanded={mobileOpen} aria-label="More navigation">
+          <span className="mobile-more-dots" aria-hidden="true">•••</span><span className="mobile-nav-label">More</span>
+        </button>
       </nav>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="navbar-mobile" id="mobile-navbar">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`mobile-nav-link ${isActive ? 'active' : ''}`}
-            >
-              <div className="mobile-icon-wrapper">
-                <Icon size={22} />
-                {item.badge > 0 && (
-                  <span className="nav-badge">{item.badge}</span>
-                )}
-              </div>
-            </Link>
-          );
-        })}
-      </nav>
+      {mobileOpen && (
+        <div className="mobile-more-menu" role="dialog" aria-label="More navigation options">
+          {[
+            ...NAV_ITEMS.filter((item) => ['/notifications', '/behaviour', '/analytics'].includes(item.path)),
+            { path: '/profile', icon: User, label: 'Profile' },
+          ].map((item) => <div key={item.path}>{renderLink(item, true)}</div>)}
+          <button className="mobile-menu-action" onClick={toggleTheme}>{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}{theme === 'light' ? 'Dark mode' : 'Light mode'}</button>
+          <button className="mobile-menu-action" onClick={handleLogout}><LogOut size={17} />Log out</button>
+        </div>
+      )}
     </>
   );
 };

@@ -14,12 +14,12 @@ import toast from 'react-hot-toast';
 import './Analytics.css';
 
 const COLORS = {
-  primary:   '#C56E5A',
-  accent:    '#D4A373',
-  secondary: '#8FA68E',
-  safe:      '#8FA68E',
-  toxic:     '#C56E5A',
-  muted:     '#6B7280',
+  primary:   '#2563EB',
+  accent:    '#14B8A6',
+  secondary: '#0F766E',
+  safe:      '#0F9F79',
+  toxic:     '#DC4C4C',
+  muted:     '#64748B',
 };
 
 /* ─── Stat Card ───────────────────────────────────────────────────────── */
