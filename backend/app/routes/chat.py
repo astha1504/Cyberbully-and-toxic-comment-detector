@@ -26,8 +26,18 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
         other_user = await users_collection.find_one({"_id": ObjectId(other_id)})
         if not other_user:
             continue
-        last_msg = await messages_collection.find({"conversation_id": str(conv["_id"])}).sort("created_at", -1).limit(1).to_list(1)
-        unread_count = await messages_collection.count_documents({"conversation_id": str(conv["_id"]), "sender_id": {"$ne": user_id}, "is_read": False})
+        delivered_filter = {
+            "conversation_id": str(conv["_id"]),
+            "delivery_status": {"$ne": "blocked"},
+        }
+        last_msg = await messages_collection.find(delivered_filter).sort("created_at", -1).limit(1).to_list(1)
+        if not last_msg:
+            continue
+        unread_count = await messages_collection.count_documents({
+            **delivered_filter,
+            "sender_id": {"$ne": user_id},
+            "is_read": False,
+        })
         result.append({
             "id": str(conv["_id"]),
             "user": {
@@ -44,7 +54,10 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
 
 @router.get("/messages/{conv_id}")
 async def get_messages(conv_id: str, conv = Depends(get_conversation_or_404)):
-    msgs = await messages_collection.find({"conversation_id": conv_id}).sort("created_at", 1).to_list(1000)
+    msgs = await messages_collection.find({
+        "conversation_id": conv_id,
+        "delivery_status": {"$ne": "blocked"},
+    }).sort("created_at", 1).to_list(1000)
     return [{**{k: v for k, v in m.items() if k != "_id"}, "id": str(m["_id"])} for m in msgs]
 
 @router.post("/conversation")
@@ -52,6 +65,10 @@ async def create_conversation(data: dict, current_user: dict = Depends(get_curre
     other_user_id = data.get("user_id")
     if not other_user_id:
         raise HTTPException(status_code=400, detail="user_id is required")
+    if not ObjectId.is_valid(other_user_id):
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    if str(other_user_id) == str(current_user["_id"]):
+        raise HTTPException(status_code=400, detail="You cannot start a conversation with yourself")
     other = await users_collection.find_one({"_id": ObjectId(other_user_id)})
     if not other:
         raise HTTPException(status_code=404, detail="User not found")

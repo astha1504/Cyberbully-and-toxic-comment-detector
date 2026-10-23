@@ -32,7 +32,7 @@
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   border: none;
-  background: #16a34a;
+  background: #15803d;
   color: #fff;
   font-size: 0.85rem;
   cursor: pointer;
@@ -40,7 +40,7 @@
 }
 
 .btn-accept:hover {
-  background: #15803d;
+  background: #166534;
 }
 
 .btn-dismiss {
@@ -55,4 +55,35 @@
 
 .btn-dismiss:hover {
   background: #dcfce7;
+}
+
+[data-theme='dark'] .rewrite-card {
+  background: #1e2b22;
+  border-color: #35523d;
+}
+
+[data-theme='dark'] .rewrite-header {
+  color: #a7f3c0;
+}
+
+[data-theme='dark'] .rewrite-suggestion {
+  color: #dcfce7;
+}
+
+[data-theme='dark'] .btn-accept {
+  background: #15803d;
+}
+
+[data-theme='dark'] .btn-accept:hover {
+  background: #166534;
+}
+
+[data-theme='dark'] .btn-dismiss {
+  color: #b7ebc3;
+  background: transparent;
+  border-color: #426548;
+}
+
+[data-theme='dark'] .btn-dismiss:hover {
+  background: #293d2e;
 }

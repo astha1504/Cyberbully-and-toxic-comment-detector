@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { searchUsers } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import './Explore.css';
@@ -9,6 +10,7 @@ const Explore = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -19,6 +21,7 @@ const Explore = () => {
       }, 300);
     } else {
       setResults([]);
+      setSearchError('');
     }
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -27,13 +30,16 @@ const Explore = () => {
 
   const performSearch = async (q) => {
     setLoading(true);
+    setSearchError('');
     try {
       const { data } = await searchUsers(q);
       setResults(data);
     } catch (err) {
       setResults([]);
+      setSearchError(getApiErrorMessage(err, 'Could not search for people.'));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -58,6 +64,8 @@ const Explore = () => {
             )}
           </div>
         </div>
+
+        {searchError && <div className="explore-error" role="alert">{searchError}</div>}
 
         <AnimatePresence>
           {results.length > 0 && (

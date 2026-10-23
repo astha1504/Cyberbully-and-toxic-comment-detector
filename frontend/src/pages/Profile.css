@@ -7,6 +7,26 @@
   margin: 0 auto;
 }
 
+.profile-load-error {
+  display: flex;
+  max-width: 520px;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 3rem auto;
+  padding: 2rem;
+  color: var(--text-primary);
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.profile-load-error p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 /* Header */
 .profile-header {
   display: flex;
@@ -141,6 +161,20 @@
   font-size: 15px;
 }
 
+.stat-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.stat-button:hover .stat-label {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
 .stat-number {
   font-weight: 700;
 }
@@ -272,6 +306,110 @@
   max-height: 90vh;
   overflow-y: auto;
   transition: background 0.3s ease;
+}
+
+.relationship-modal {
+  max-width: 460px;
+}
+
+.relationship-list {
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+  padding: 8px 16px 16px;
+}
+
+.relationship-person {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.relationship-person:last-child {
+  border-bottom: 0;
+}
+
+.relationship-person-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.relationship-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.relationship-person-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.relationship-person-info strong,
+.relationship-person-info small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relationship-person-info strong {
+  font-size: 14px;
+}
+
+.relationship-person-info small {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.relationship-message-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-light);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.relationship-message-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.relationship-empty {
+  padding: 28px 16px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 14px;
+}
+
+.relationship-error {
+  color: #9b2c20;
+}
+
+[data-theme='dark'] .relationship-error {
+  color: #ffb4a8;
 }
 
 .modal-header {

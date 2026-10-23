@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, BeforeValidator, PlainSerializer
+from pydantic import BaseModel, EmailStr, Field, BeforeValidator, PlainSerializer, field_validator
 from typing import Optional, Annotated, Any, List
 from bson import ObjectId
 
@@ -20,6 +20,13 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_length(cls, v: str) -> str:
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password must be 72 bytes or fewer")
+        return v
 
 class UserResponse(UserBase):
     id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")

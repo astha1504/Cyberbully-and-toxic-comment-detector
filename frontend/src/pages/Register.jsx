@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { registerUser } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -37,8 +38,7 @@ const Register = () => {
       toast.success('Account created successfully!');
       navigate('/');
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || err.response?.data?.error || 'Registration failed';
-      toast.error(errorMsg);
+      toast.error(getApiErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setLoading(false);
     }

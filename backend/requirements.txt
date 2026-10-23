@@ -1,9 +1,10 @@
 fastapi
-uvicorn
+uvicorn[standard]
 motor
 pymongo
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt==3.2.0
 httpx
 python-dotenv
 pydantic[email]

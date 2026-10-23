@@ -1,20 +1,22 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Layout/Navbar';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Home from './pages/Home';
-import CreatePost from './pages/CreatePost';
-import Profile from './pages/Profile';
-import Chat from './pages/Chat';
-import Explore from './pages/Explore';
-import Notifications from './pages/Notifications';
-import Analytics from './pages/Analytics';
-import UserBehaviour from './pages/UserBehaviour';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
+
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Home = lazy(() => import('./pages/Home'));
+const CreatePost = lazy(() => import('./pages/CreatePost'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Chat = lazy(() => import('./pages/Chat'));
+const Explore = lazy(() => import('./pages/Explore'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const UserBehaviour = lazy(() => import('./pages/UserBehaviour'));
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -46,7 +48,8 @@ const AppRoutes = () => {
   const { user } = useAuth();
 
   return (
-    <Routes>
+    <Suspense fallback={<div className="page-loading"><div className="spinner" /></div>}>
+      <Routes>
       <Route
         path="/login"
         element={user ? <Navigate to="/" /> : <Login />}
@@ -136,7 +139,8 @@ const AppRoutes = () => {
         }
       />
       <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
 

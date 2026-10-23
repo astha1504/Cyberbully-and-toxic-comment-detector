@@ -9,19 +9,9 @@ import {
   TrendingUp, TrendingDown, RefreshCw, BarChart2
 } from 'lucide-react';
 import { getAnalyticsOverview, getToxicComments, getToxicityTrend } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import toast from 'react-hot-toast';
 import './Analytics.css';
-
-/* ─── Fallback mock data (used when API not yet available) ─────────── */
-const MOCK_TREND = [
-  { date: '06/11', toxic_count: 3, safe_count: 28 },
-  { date: '06/12', toxic_count: 7, safe_count: 42 },
-  { date: '06/13', toxic_count: 2, safe_count: 35 },
-  { date: '06/14', toxic_count: 11, safe_count: 61 },
-  { date: '06/15', toxic_count: 5, safe_count: 48 },
-  { date: '06/16', toxic_count: 8, safe_count: 55 },
-  { date: '06/17', toxic_count: 4, safe_count: 72 },
-];
 
 const COLORS = {
   primary:   '#C56E5A',
@@ -69,60 +59,72 @@ const CustomTooltip = ({ active, payload, label }) => {
 /* ─── Main Component ──────────────────────────────────────────────────── */
 const Analytics = () => {
   const [overview, setOverview]       = useState(null);
-  const [trend, setTrend]             = useState([]);
+  const [trend, setTrend]             = useState(null);
   const [toxicComments, setToxic]     = useState([]);
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
+  const [loadError, setLoadError]     = useState('');
 
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     setLoading(true);
-    try {
-      const [ovRes, trRes, tcRes] = await Promise.allSettled([
-        getAnalyticsOverview(),
-        getToxicityTrend(),
-        getToxicComments(),
-      ]);
+    const [ovRes, trRes, tcRes] = await Promise.allSettled([
+      getAnalyticsOverview(),
+      getToxicityTrend(),
+      getToxicComments(),
+    ]);
+    const failedSections = [];
 
-      if (ovRes.status === 'fulfilled') setOverview(ovRes.value.data);
-      if (trRes.status === 'fulfilled') {
-        const raw = trRes.value.data;
-        setTrend(
-          Array.isArray(raw)
-            ? raw.map((r) => ({
-                ...r,
-                date: r.date?.slice(5) ?? r.date,
-                safe_count: r.safe_count ?? Math.floor(Math.random() * 60) + 20,
-              }))
-            : MOCK_TREND
-        );
-      } else {
-        setTrend(MOCK_TREND);
-      }
-      if (tcRes.status === 'fulfilled') setToxic(tcRes.value.data?.slice(0, 5) || []);
-    } catch {
-      setTrend(MOCK_TREND);
+    if (ovRes.status === 'fulfilled') {
+      setOverview(ovRes.value.data);
+    } else {
+      setOverview(null);
+      failedSections.push('summary');
     }
+    if (trRes.status === 'fulfilled' && Array.isArray(trRes.value.data)) {
+      setTrend(trRes.value.data.map((row) => ({
+        ...row,
+        date: row.date?.slice(5) ?? row.date,
+      })));
+    } else {
+      setTrend(null);
+      failedSections.push('trend');
+    }
+    if (tcRes.status === 'fulfilled' && Array.isArray(tcRes.value.data)) {
+      setToxic(tcRes.value.data.slice(0, 5));
+    } else {
+      setToxic([]);
+      failedSections.push('flagged comments');
+    }
+
+    const firstFailure = [ovRes, trRes, tcRes].find((result) => result.status === 'rejected');
+    setLoadError(failedSections.length
+      ? `Could not load ${failedSections.join(', ')}. ${getApiErrorMessage(firstFailure?.reason, 'Refresh and try again.')}`
+      : '');
     setLoading(false);
+    return failedSections.length === 0;
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchAll();
+    const refreshed = await fetchAll();
     setRefreshing(false);
-    toast.success('Dashboard refreshed');
+    if (refreshed) toast.success('Dashboard refreshed');
   };
 
   /* Derived values */
   const total   = overview?.total_comments ?? 0;
   const safe    = overview?.safe_comments  ?? 0;
   const toxic   = overview?.toxic_comments ?? 0;
-  const safeRate = total > 0 ? Math.round((safe / total) * 100) : 0;
+  const moderatedTotal = safe + toxic;
+  const safeRate = moderatedTotal > 0 ? Math.round((safe / moderatedTotal) * 100) : 0;
+  const toxicRate = moderatedTotal > 0 ? Math.round((toxic / moderatedTotal) * 100) : 0;
+  const hasTrend = Array.isArray(trend) && trend.length > 0;
 
   const pieData = [
-    { name: 'Safe',  value: safe  || 1 },
-    { name: 'Toxic', value: toxic || 0 },
+    { name: 'Safe',  value: safe },
+    { name: 'Toxic', value: toxic },
   ];
 
   if (loading) {
@@ -166,36 +168,38 @@ const Analytics = () => {
         <StatCard
           icon={MessageSquare}
           label="Total Comments"
-          value={total}
-          sub="All-time"
+          value={overview ? total : null}
+          sub={overview ? `${overview.unverified_comments ?? Math.max(total - moderatedTotal, 0)} awaiting or unverified` : 'Unavailable'}
           color={COLORS.secondary}
           delay={0}
         />
         <StatCard
           icon={ShieldCheck}
           label="Safe Comments"
-          value={safe}
-          sub={`${safeRate}% clean`}
+          value={overview ? safe : null}
+          sub={overview ? `${safeRate}% of moderated` : 'Unavailable'}
           color={COLORS.safe}
           delay={0.05}
         />
         <StatCard
           icon={AlertTriangle}
           label="Toxic Comments"
-          value={toxic}
-          sub={`${100 - safeRate}% flagged`}
+          value={overview ? toxic : null}
+          sub={overview ? `${toxicRate}% of moderated` : 'Unavailable'}
           color={COLORS.toxic}
           delay={0.1}
         />
         <StatCard
           icon={safeRate >= 80 ? TrendingUp : TrendingDown}
           label="Safety Rate"
-          value={`${safeRate}%`}
-          sub={safeRate >= 80 ? 'Great community!' : 'Needs attention'}
+          value={overview ? (moderatedTotal ? `${safeRate}%` : '—') : null}
+          sub={overview ? (moderatedTotal ? 'Safe moderation rate' : 'No moderation data yet') : 'Unavailable'}
           color={safeRate >= 80 ? COLORS.secondary : COLORS.toxic}
           delay={0.15}
         />
       </div>
+
+      {loadError && <div className="analytics-error" role="alert">{loadError}</div>}
 
       {/* ── Charts Row ──────────────────────────────────────────────── */}
       <div className="analytics-charts-row">
@@ -211,7 +215,7 @@ const Analytics = () => {
             <h2 className="chart-title">Comment Trend</h2>
             <span className="chart-subtitle">Safe vs Toxic over time</span>
           </div>
-          <ResponsiveContainer width="100%" height={240}>
+          {hasTrend ? <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradSafe" x1="0" y1="0" x2="0" y2="1">
@@ -231,7 +235,7 @@ const Analytics = () => {
               <Area type="monotone" dataKey="safe_count"  name="Safe"  stroke={COLORS.safe}  fill="url(#gradSafe)"  strokeWidth={2} />
               <Area type="monotone" dataKey="toxic_count" name="Toxic" stroke={COLORS.toxic} fill="url(#gradToxic)" strokeWidth={2} />
             </AreaChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer> : <div className="analytics-empty">{trend === null ? 'Trend data is unavailable.' : 'No moderation activity in the last 14 days.'}</div>}
         </motion.div>
 
         {/* Pie Chart — Distribution */}
@@ -245,7 +249,7 @@ const Analytics = () => {
             <h2 className="chart-title">Content Distribution</h2>
             <span className="chart-subtitle">Safe vs Toxic split</span>
           </div>
-          <ResponsiveContainer width="100%" height={240}>
+          {overview && moderatedTotal > 0 ? <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
                 data={pieData}
@@ -268,11 +272,11 @@ const Analytics = () => {
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
             </PieChart>
-          </ResponsiveContainer>
-          <div className="pie-center-label">
+          </ResponsiveContainer> : <div className="analytics-empty">{overview ? 'No moderation data yet.' : 'Summary data is unavailable.'}</div>}
+          {overview && moderatedTotal > 0 && <div className="pie-center-label">
             <span className="pie-rate">{safeRate}%</span>
             <span className="pie-rate-sub">Safe</span>
-          </div>
+          </div>}
         </motion.div>
       </div>
 
@@ -287,7 +291,7 @@ const Analytics = () => {
           <h2 className="chart-title">Daily Toxic Comment Count</h2>
           <span className="chart-subtitle">Posts flagged per day</span>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
+        {hasTrend ? <ResponsiveContainer width="100%" height={220}>
           <BarChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
@@ -295,7 +299,7 @@ const Analytics = () => {
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="toxic_count" name="Toxic" fill={COLORS.primary} radius={[6,6,0,0]} />
           </BarChart>
-        </ResponsiveContainer>
+        </ResponsiveContainer> : <div className="analytics-empty">{trend === null ? 'Trend data is unavailable.' : 'No flagged comments in the last 14 days.'}</div>}
       </motion.div>
 
       {/* Recent Toxic Comments Table */}

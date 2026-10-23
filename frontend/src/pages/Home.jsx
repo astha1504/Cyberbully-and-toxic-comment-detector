@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getPosts, getSuggestions, followUser } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/Post/PostCard';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -12,6 +13,7 @@ const FALLBACK_AVATAR = 'https://ui-avatars.com/api/?background=C56E5A&color=fff
 
 const Home = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,11 +23,21 @@ const Home = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const newPost = location.state?.newPost;
+    if (newPost) {
+      setPosts((prev) => {
+        const exists = prev.some((p) => p.id === newPost.id);
+        return exists ? prev : [newPost, ...prev];
+      });
+    }
+  }, [location.state]);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const postsRes = await getPosts();
+      const postsRes = await getPosts({ limit: 20, skip: 0 });
       let suggestionsRes = { data: [] };
       try {
         suggestionsRes = await getSuggestions();
@@ -39,14 +51,19 @@ const Home = () => {
       setSuggestions(suggestionsData);
     } catch (err) {
       console.error('Feed fetch error:', err);
-      setError('Failed to load feed. Please check your connection.');
-      toast.error('Failed to load feed');
+      const message = getApiErrorMessage(err, 'Could not load the feed.');
+      setError(message);
+      toast.error(message);
     }
     setLoading(false);
   };
 
   const handleDeletePost = (postId) => {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handlePostUpdated = (updatedPost) => {
+    setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
   };
 
   const handleFollow = async (userId) => {
@@ -56,7 +73,7 @@ const Home = () => {
       toast.success('Followed!');
     } catch (err) {
       console.error('Follow error:', err);
-      toast.error('Failed to follow');
+      toast.error(getApiErrorMessage(err, 'Could not follow this person.'));
     }
   };
 
@@ -100,7 +117,7 @@ const Home = () => {
             </div>
           ) : (
             posts.map((post) => (
-              <PostCard key={post.id} post={post} onDelete={handleDeletePost} />
+              <PostCard key={post.id} post={post} onDelete={handleDeletePost} onPostUpdated={handlePostUpdated} />
             ))
           )}
         </div>

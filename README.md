@@ -30,26 +30,61 @@ graph TD
 
 ```mermaid
 graph TD
-    K[User sends Chat Message] --> L{Check Friendship}
-    L -->|Friends| M[Relaxed Toxicity Threshold 0.6-0.7]
-    L -->|Strangers| N[Strict Toxicity Threshold 0.4-0.5]
-    M --> O[Analyze Conversation History]
-    N --> O
-    O --> P{Toxicity Pattern?}
-    P -->|High History| Q[Flag as Bullying/Suppression]
-    P -->|Normal| R[Standard Toxicity Check]
-    Q --> S[Block Message + Warn Sender]
-    R --> S
-    S --> T[Send Warning Notification]
+    K[User types a message] --> L[Check current text]
+    L --> M[Read latest 10 stored messages]
+    M --> N[Combine text score with sender's recent toxic pattern]
+    N --> O{Toxicity warning?}
+    O -->|No| P[Allow normal send]
+    O -->|Yes| Q[Offer edit or send anyway]
+    Q --> R{Third moderation finding?}
+    R -->|Yes| S[Block chat and mute for 24 hours]
+    R -->|No| T[Record warning and apply the user's choice]
 ```
 
 ## Premium Application Features
 
-1.  **AI Moderation Engine (Important)**: Real-time detection of abusive, hate, and toxic speech using a hybrid pipeline of keyword checks and deep learning sequence classification.
-2.  **Context-Aware Chat Moderation**: Detects toxic messages in private chats with relationship-aware thresholds. Friends get relaxed thresholds (friendly teasing allowed), strangers get strict thresholds (bullying/harassment blocked).
-3.  **Real-Time WebSocket Notifications**: Integrated STOMP/WebSocket alerts that instantly notify users if a comment violates community guidelines (flashes a red Warning/AlertTriangle).
-4. **Analytics & Toxicity Heatmap**: A visual admin layout charting the trends of flagged content, overall user toxicity ratings, and general community health metrics.
-5. **Auto-Blur Detection Preview**: A simulated social media feed showing blurred toxic comments natively alongside clean posts.
+1. **Live intervention**: A debounced check runs while a user writes a post, comment, or chat message. The review dialog offers Cancel, Edit, and Post Anyway.
+2. **Reasons and wording**: The dialog shows the model's overall toxicity score, phrase-match signals for insult/harassment/threat, and the matched wording when available.
+3. **Repeat-offender handling**: Server-confirmed moderation findings count across posts, comments, and chat. The third finding triggers a 24-hour posting mute.
+4. **Chat context**: Chat stores delivered messages and consults the latest 10 messages for repeated toxic behavior by the sender. Blocked attempts retain moderation metadata without storing their text.
+5. **Image OCR**: Tesseract reads text in JPEG, PNG, and WEBP uploads before posting and the backend checks the image again during moderation.
+6. **Voice check**: A selected voice note is transcribed, checked, then opened as editable text before sending as a chat message.
+
+The bundled text model is binary (`non_offensive` / `toxic`). The insult, harassment, and threat percentages are transparent phrase-match indicators, not calibrated probabilities from a multi-label model. Exact causal word attribution is available only when a known phrase matched.
+
+## Prerequisites
+
+| Tool | Required Version | Check Command |
+|------|-----------------|---------------|
+| Python | 3.10+ | `python --version` |
+| Node.js | 16+ | `node --version` |
+| MongoDB | Running locally | `mongosh --eval "db.runCommand({ ping: 1 })"` |
+| Git | Any | `git --version` |
+| Tesseract OCR | Current | `tesseract --version` |
+
+Voice transcription is optional and requires `GROQ_API_KEY` in `backend/.env`. Selecting a voice note sends that audio to Groq for transcription; the resulting text is checked locally and shown for review before it is sent as a chat message.
+
+## Starting MongoDB (MongoDB Desktop)
+
+If you have **MongoDB Desktop** installed:
+
+1. Open **MongoDB Desktop**
+2. Go to the **Services** tab (or **My Cluster**)
+3. Click **Start** next to your local MongoDB instance
+4. Wait for the status to show **Running** (green)
+
+Alternatively, start it from PowerShell:
+
+```powershell
+net start MongoDB
+```
+
+Confirm it is running:
+
+```powershell
+mongosh --eval "db.runCommand({ ping: 1 })"
+# Expected output: { ok: 1 }
+```
 
 ## Quick Start
 
@@ -88,7 +123,7 @@ npm run dev
 
 ## Running the Toxicity Moderation Engine
 
-Place your PyTorch/Safetensors moderation weights under `backend/model/`. If no weights are found, the system intelligently defaults to standard baseline fallback configurations.
+Place your PyTorch/Safetensors moderation weights under `backend/model/`. If the model cannot load, explicit phrase matches still work and the app marks other checks as unverified instead of claiming the text is safe. Image OCR uses the Tesseract executable on `PATH`; set `TESSERACT_CMD` in `backend/.env` if it is installed elsewhere.
 
 Note: `backend/model/` is gitignored because model weights are large files. After cloning, add your trained model files to that directory manually.
 
@@ -97,6 +132,9 @@ Note: `backend/model/` is gitignored because model weights are large files. Afte
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/comments/` | Creates a comment & Triggers Background ML Toxicity Task |
+| `POST` | `/api/moderation/check-text` | Checks text while composing and returns score, phrase signals, and matched wording |
+| `POST` | `/api/moderation/check-image` | OCRs a base64 image data URI and checks the detected text |
+| `POST` | `/api/moderation/check-audio` | Sends an uploaded audio file to configured Groq transcription, then checks the transcript |
 | `POST` | `/chat/conversation` | Creates a conversation between two users |
 | `GET` | `/chat/conversations` | Retrieves user's conversation list |
 | `GET` | `/chat/messages/{conv_id}` | Retrieves messages for a conversation |
@@ -116,10 +154,13 @@ Note: `backend/model/` is gitignored because model weights are large files. Afte
   "original_content": "offensive message text",
   "toxicity_score": 0.92,
   "label": "suppression_pattern",
+  "highlighted_words": ["worthless"],
+  "category_scores": {"insult": 100, "harassment": 100, "threat": 0},
   "context": {
     "is_friend": false,
     "conversation_toxicity": 0.7,
-    "friendship_modifier": 0.0
+    "recent_messages_considered": 10,
+    "toxic_messages_from_sender": 7
   }
 }
 ```
@@ -142,20 +183,7 @@ Note: `backend/model/` is gitignored because model weights are large files. Afte
 
 ## Context-Aware Moderation Logic
 
-The chat moderation system uses relationship-based thresholds:
-
-| Relationship | Threshold | Warning Message |
-|--------------|-----------|-----------------|
-| Friends | 0.6-0.7 | "Friendly teasing detected. Keep it respectful." |
-| Strangers | 0.4-0.5 | "Potentially harmful language detected." |
-| High toxicity pattern | - | "Harassment detected. This violates community guidelines." |
-
-### Conversation History Context
-
-The system analyzes the last 10 messages in a conversation:
-- **0-2 toxic messages**: Standard toxicity check
-- **3-4 toxic messages**: Label as "potential_bullying"
-- **5+ toxic messages**: Label as "suppression_pattern" (likely targeted harassment)
+The chat checker considers the current message and the latest 10 stored messages in that conversation. It adds a context signal when the same sender has recent toxic messages, and surfaces that pattern in the moderation warning. Friendship does not lower the toxicity threshold.
 
 ## Live WebSockets & Moderation Demo 
 

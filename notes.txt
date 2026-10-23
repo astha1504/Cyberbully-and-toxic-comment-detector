@@ -1,0 +1,30 @@
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+cd backend && .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+
+
+
+cd frontend && npm run dev
+
+
+
+net start MongoDB
+mongosh --eval "db.runCommand({ ping: 1 })"
+
+
+
+
+DONE - Live intervention and choices: Start writing a clearly insulting test message, such as “you are stupid,” in a post, comment, or chat composer. Wait for the suggestion as you type. Submit it and check the warning, highlighted wording, and Post anyway, Edit, and Cancel choices. Try a neutral message too; it should not show the same warning.
+
+DONE - Toxicity explanation: In the warning, check the insult, harassment, and threat indicators. The project’s category scores are phrase-match indicators, not calibrated probabilities, so treat them as explanations rather than precise confidence scores.
+
+DONE - Repeat-offender handling: Submit three flagged messages from the same test account, confirming each one so the server records the finding. Check that warnings accumulate and that the third finding mutes the account for 24 hours. Then try to post or send another message from that account.
+
+Chat context: Use a different account so you don’t hit the mute limit. Send several messages in a chat, then try a message whose meaning depends on that exchange. Check whether the moderation response reflects the recent conversation. The chat context uses up to the latest 10 stored messages.
+
+Word highlighting: Use a test message containing a phrase the detector recognizes. Check that the warning highlights the matched wording. If it doesn’t recognize a phrase, it may have no specific word to highlight.
+
+Image OCR: Upload a JPEG, PNG, or WEBP image containing large, readable text that would be flagged if typed into a message. Submit it and check for an OCR warning that identifies text from the image. OCR checks text in the image; it does not determine whether the image’s visual content is harmful. If OCR doesn’t run, check that tesseract --version works in PowerShell.
+
+Voice: This requires GROQ_API_KEY in backend/.env. Use the voice-note upload control in chat and select a supported audio file. Check that it produces an editable transcript, then test sending it. Audio is sent to Groq for transcription, so this feature won’t work without the key.

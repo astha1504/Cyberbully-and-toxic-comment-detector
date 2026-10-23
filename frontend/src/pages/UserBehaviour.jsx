@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUserBehaviour } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion } from 'framer-motion';
 import {
-  UserX, Shield, AlertTriangle, Edit3, Clock, Ban,
+  UserX, Shield, AlertTriangle, Edit3, Clock,
   TrendingUp, Activity
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './UserBehaviour.css';
 
+const parseUtcTimestamp = (value) => {
+  if (!value) return null;
+  const timestamp = typeof value === 'string' ? value : String(value);
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(timestamp);
+  const parsed = new Date(hasTimezone ? timestamp : `${timestamp}Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const UserBehaviour = () => {
   const { user } = useAuth();
   const [behaviour, setBehaviour] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     fetchBehaviour();
@@ -20,11 +30,14 @@ const UserBehaviour = () => {
 
   const fetchBehaviour = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const { data } = await getUserBehaviour();
       setBehaviour(data);
-    } catch {
-      toast.error('Failed to load behaviour data');
+    } catch (error) {
+      const message = getApiErrorMessage(error, 'Could not load your Behaviour Profile.');
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -41,17 +54,37 @@ const UserBehaviour = () => {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="behaviour-page">
+        <div className="behaviour-error" role="alert">
+          <p>{loadError}</p>
+          <button className="behaviour-refresh-btn" onClick={fetchBehaviour}>Try again</button>
+        </div>
+      </div>
+    );
+  }
+
   const safeComments = Math.max(0, (behaviour?.toxic_comments || 0) * 5);
-  const totalEstimated = safeComments + (behaviour?.toxic_comments || 0) + (behaviour?.edited_comments || 0) || 1;
+  const totalEstimated = (safeComments + (behaviour?.toxic_comments || 0) + (behaviour?.edited_comments || 0)) || 1;
   const safeRate = Math.round((safeComments / totalEstimated) * 100);
 
-  const isMuted = behaviour?.mute_until && new Date(behaviour.mute_until) > new Date();
+  const muteUntil = parseUtcTimestamp(behaviour?.mute_until);
+  const isMuted = muteUntil && muteUntil > new Date();
+  const muteUntilText = muteUntil?.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short',
+  });
 
   const statCards = [
     { label: 'Warnings', value: behaviour?.warning_count || 0, icon: AlertTriangle, color: '#f59e0b' },
-    { label: 'Toxic Comments', value: behaviour?.toxic_comments || 0, icon: UserX, color: '#ef4444' },
+    { label: 'Toxic Attempts', value: behaviour?.toxic_comments || 0, icon: UserX, color: '#ef4444' },
     { label: 'Edited Comments', value: behaviour?.edited_comments || 0, icon: Edit3, color: '#3b82f6' },
-    { label: 'Bans', value: behaviour?.ban_count || 0, icon: Ban, color: '#991b1b' },
     { label: 'Risk Score', value: behaviour?.risk_score ?? 0, icon: Activity, color: '#8b5cf6' },
     { label: 'Safety Rate', value: `${safeRate}%`, icon: Shield, color: '#10b981' },
   ];
@@ -85,7 +118,7 @@ const UserBehaviour = () => {
           <Clock size={20} />
           <div>
             <strong>You are currently muted</strong>
-            <p>You cannot post or comment until {new Date(behaviour.mute_until).toLocaleString()}</p>
+            <p>You cannot post or comment until {muteUntilText}</p>
           </div>
         </motion.div>
       )}
@@ -121,8 +154,8 @@ const UserBehaviour = () => {
           <li>Keep your comments respectful and constructive</li>
           <li>Edit messages flagged by AI instead of posting anyway</li>
           <li>Use the AI rewrite assistant to improve your tone</li>
-          <li>Repeated violations will result in temporary mutes</li>
-          <li>Severe or repeated abuse leads to account bans</li>
+          <li>Three moderation findings trigger a 24-hour posting mute</li>
+          <li>Further violations can trigger another temporary mute</li>
         </ul>
       </motion.div>
     </div>

@@ -31,6 +31,8 @@ export const SocketProvider = ({ children }) => {
               duration: 5000,
             });
             setNotifications((prev) => [...prev, data]);
+          } else if (eventType === 'message_error') {
+            toast.error(data.message || 'Message could not be sent.');
           }
           if (listeners[eventType]) {
             listeners[eventType](data.payload || data);
@@ -41,6 +43,7 @@ export const SocketProvider = ({ children }) => {
       };
 
       const adapter = {
+        isConnected: () => newSocket.readyState === WebSocket.OPEN,
         on: (event, callback) => {
           listeners[event] = callback;
         },
@@ -48,8 +51,13 @@ export const SocketProvider = ({ children }) => {
           delete listeners[event];
         },
         emit: (event, payload) => {
-          if (newSocket.readyState === WebSocket.OPEN) {
+          if (newSocket.readyState !== WebSocket.OPEN) return false;
+          try {
             newSocket.send(JSON.stringify({ event, ...payload }));
+            return true;
+          } catch (err) {
+            console.error('WebSocket send error', err);
+            return false;
           }
         },
       };

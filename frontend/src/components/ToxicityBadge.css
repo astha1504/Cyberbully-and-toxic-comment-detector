@@ -16,3 +16,13 @@
 .toxicity-badge:hover {
   background: #fecaca;
 }
+
+[data-theme='dark'] .toxicity-badge {
+  color: #ffd0d0;
+  background: #492629;
+  border-color: #69383d;
+}
+
+[data-theme='dark'] .toxicity-badge:hover {
+  background: #5a2e32;
+}

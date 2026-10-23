@@ -7,7 +7,10 @@ const API = axios.create({
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
+  const hasAuthorization = config.headers?.get?.('Authorization')
+    || config.headers?.Authorization
+    || config.headers?.authorization;
+  if (token && !hasAuthorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -16,10 +19,15 @@ API.interceptors.request.use((config) => {
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || '';
+    const isAuthSubmission = /^\/?auth\/(login|register)(?:$|[?#])/.test(requestUrl);
+
+    if (error.response?.status === 401 && !isAuthSubmission) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -32,23 +40,28 @@ export const verifyToken  = ()     => API.get('/auth/me');
 
 // ── Posts ─────────────────────────────────────────────────────────────────────
 export const createPost = (data)   => API.post('/posts/', data);
-export const getPosts   = ()       => API.get('/posts/');
+export const getPost = (id)        => API.get(`/posts/${id}`);
+export const updatePost = (id, data) => API.patch(`/posts/${id}`, data);
+export const getPosts   = (params = {}) => API.get('/posts/', { params });
 export const likePost   = (id)     => API.post(`/posts/${id}/like`);
 export const unlikePost = (id)     => API.delete(`/posts/${id}/like`);
 export const deletePost = (id)     => API.delete(`/posts/${id}`);
 
 // ── Comments ──────────────────────────────────────────────────────────────────
-export const addComment    = (postId, data) => API.post(`/comments/post/${postId}`, data);
+export const addComment    = (postId, data) => API.post('/comments/', { text: data.text, post_id: postId });
 export const getComments   = (postId)       => API.get(`/comments/post/${postId}`);
-export const deleteComment = (commentId)    => API.delete(`/posts/comments/${commentId}`);
+export const updateComment = (commentId, data) => API.patch(`/comments/${commentId}`, data);
+export const deleteComment = (commentId)    => API.delete(`/comments/${commentId}`);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const getProfile      = ()         => API.get('/users/profile');
 export const getUserProfile  = (userId)   => API.get(`/users/profile/${userId}`);
+export const getFollowers    = (userId)   => API.get(`/users/profile/${userId}/followers`);
+export const getFollowing    = (userId)   => API.get(`/users/profile/${userId}/following`);
 export const updateProfile   = (data)     => API.put('/users/profile/update', data);
 export const followUser      = (userId)   => API.post(`/users/${userId}/follow`);
 export const unfollowUser    = (userId)   => API.post(`/users/${userId}/unfollow`);
-export const searchUsers     = (q)        => API.get(`/users/search?q=${q}`);
+export const searchUsers     = (q)        => API.get('/users/search', { params: { q } });
 export const getSuggestions  = ()         => API.get('/users/suggestions');
 
 // ── Notifications ─────────────────────────────────────────────────────────────
@@ -69,11 +82,15 @@ export const getToxicityTrend     = () => API.get('/analytics/toxicity-trend');
 
 // ── User Behaviour ─────────────────────────────────────────────────────────────
 export const getUserBehaviour    = () => API.get('/analytics/user-behaviour');
-export const recordViolation     = () => API.post('/analytics/record-violation');
-export const recordEdit          = () => API.post('/analytics/record-edit');
 
 // ── Toxicity ──────────────────────────────────────────────────────────────────
-export const checkToxicity = (text) => API.post('/toxicity/check', { text });
+export const checkToxicity = (text) => API.post('/api/moderation/check-text', { text });
+export const checkImageToxicity = (imageData) => API.post('/api/moderation/check-image', { image_data: imageData });
+export const checkAudioToxicity = (file) => {
+  const body = new FormData();
+  body.append('audio', file);
+  return API.post('/api/moderation/check-audio', body);
+};
 
 // ── Moderation ─────────────────────────────────────────────────────────────────
 export const checkTextModeration = (text) => API.post('/api/moderation/check-text', { text });

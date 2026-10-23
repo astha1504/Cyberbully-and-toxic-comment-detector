@@ -8,6 +8,52 @@ from ..services.auth_service import verify_password, get_password_hash
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
+
+def _serialize_object_ids(value):
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, dict):
+        return {key: _serialize_object_ids(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_serialize_object_ids(item) for item in value]
+    if isinstance(value, tuple):
+        return [_serialize_object_ids(item) for item in value]
+    return value
+
+
+async def _get_relationship_users(user_id: str, relationship: str):
+    if not ObjectId.is_valid(user_id):
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    profile = await users_collection.find_one({"_id": ObjectId(user_id)}, {relationship: 1})
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    relationship_ids = [
+        str(related_id)
+        for related_id in profile.get(relationship, []) or []
+        if ObjectId.is_valid(str(related_id))
+    ]
+    if not relationship_ids:
+        return []
+
+    related_users = await users_collection.find(
+        {"_id": {"$in": [ObjectId(related_id) for related_id in relationship_ids]}},
+        {"username": 1, "name": 1, "profile_picture": 1},
+    ).to_list(len(relationship_ids))
+    users_by_id = {str(item["_id"]): item for item in related_users}
+
+    return [
+        {
+            "id": related_id,
+            "username": users_by_id[related_id].get("username"),
+            "name": users_by_id[related_id].get("name"),
+            "profile_picture": users_by_id[related_id].get("profile_picture"),
+        }
+        for related_id in relationship_ids
+        if related_id in users_by_id
+    ]
+
 @router.get("/profile", response_model=UserResponse)
 async def get_profile(current_user: dict = Depends(get_current_user)):
     user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
@@ -42,15 +88,33 @@ async def get_user_profile(user_id: str, current_user: dict = Depends(get_curren
             "followers": len(user.get("followers", [])),
             "following": len(user.get("following", [])),
         },
-        "posts": [{**{k: v for k, v in p.items() if k != "_id"}, "id": str(p.get("_id"))} for p in posts],
+        "posts": [
+            {
+                **_serialize_object_ids({k: v for k, v in post.items() if k != "_id"}),
+                "id": str(post.get("_id")),
+            }
+            for post in posts
+        ],
         "is_following": is_following
     }
     return result
+
+
+@router.get("/profile/{user_id}/followers")
+async def get_followers(user_id: str, current_user: dict = Depends(get_current_user)):
+    return await _get_relationship_users(user_id, "followers")
+
+
+@router.get("/profile/{user_id}/following")
+async def get_following(user_id: str, current_user: dict = Depends(get_current_user)):
+    return await _get_relationship_users(user_id, "following")
 
 @router.put("/profile/update")
 async def update_profile(data: dict, current_user: dict = Depends(get_current_user)):
     update_data = {k: v for k, v in data.items() if v is not None}
     if "password" in update_data:
+        if len(update_data["password"].encode("utf-8")) > 72:
+            raise HTTPException(status_code=400, detail="Password must be 72 bytes or fewer")
         update_data["password"] = get_password_hash(update_data["password"])
     await users_collection.update_one({"_id": ObjectId(current_user["_id"])}, {"$set": update_data})
     updated_user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
@@ -106,7 +170,7 @@ async def search_users(q: str):
 @router.get("/suggestions", response_model=List[UserResponse])
 async def get_suggestions(current_user: dict = Depends(get_current_user)):
     following = current_user.get("following", [])
-    exclude_ids = [ObjectId(current_user["_id"])] + [ObjectId(fid) for fid in following]
+    exclude_ids = [ObjectId(current_user["_id"])] + [ObjectId(fid) for fid in following if ObjectId.is_valid(fid)]
     suggestions = await users_collection.find({
         "_id": {"$nin": exclude_ids}
     }).limit(10).to_list(None)

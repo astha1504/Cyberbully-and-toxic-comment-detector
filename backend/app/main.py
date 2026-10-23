@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routes import auth, posts, comments, notifications, analytics, websockets, users, chat, moderation
+from .database import ensure_indexes
 
 app = FastAPI(
     title="AI-Powered Toxic Comment Detector",
@@ -27,6 +28,11 @@ app.include_router(websockets.router)
 app.include_router(users.router)
 app.include_router(chat.router)
 app.include_router(moderation.router)
+
+
+@app.on_event("startup")
+async def create_database_indexes():
+    await ensure_indexes()
 
 @app.get("/")
 async def root():

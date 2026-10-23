@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { UserPlus, TrendingUp, Flame } from 'lucide-react';
 import { getSuggestions, followUser } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import './Sidebar.css';
@@ -22,8 +23,8 @@ const Sidebar = () => {
       await followUser(userId);
       setSuggestions((prev) => prev.filter((s) => s.id !== userId));
       toast.success('Followed!');
-    } catch {
-      toast.error('Failed to follow');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Could not follow this person.'));
     }
   };
 

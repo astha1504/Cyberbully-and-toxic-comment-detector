@@ -1,0 +1,36 @@
+.live-toxicity-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.live-toxicity-hint.is-flagged {
+  color: #9b2c20;
+}
+
+[data-theme='dark'] .live-toxicity-hint.is-flagged {
+  color: #ffb4a8;
+}
+
+.live-hint-words {
+  font-weight: 600;
+}
+
+.live-hint-spinner {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: liveHintSpin 0.8s linear infinite;
+}
+
+@keyframes liveHintSpin {
+  to { transform: rotate(360deg); }
+}

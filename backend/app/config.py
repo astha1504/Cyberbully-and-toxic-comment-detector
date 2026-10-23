@@ -9,5 +9,7 @@ class Settings:
     ALGORITHM = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
     MODEL_URL = os.getenv("MODEL_URL", "http://localhost:8001/predict")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    GROQ_REWRITE_MODEL = os.getenv("GROQ_REWRITE_MODEL", "openai/gpt-oss-20b")
 
 settings = Settings()

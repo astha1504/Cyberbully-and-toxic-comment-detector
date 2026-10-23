@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../services/authService';  // was '../services/api'
 import API from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -32,13 +33,7 @@ const Login = () => {
       toast.success('Welcome back!');
       navigate('/');
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      const errorMsg = typeof detail === 'string' 
-        ? detail 
-        : typeof detail === 'object' 
-          ? detail.map(d => d.msg || JSON.stringify(d)).join(', ')
-          : err.response?.data?.error || 'Login failed';
-      toast.error(errorMsg);
+      toast.error(getApiErrorMessage(err, 'Login failed. Please try again.'));
     } finally {
       setLoading(false);
     }

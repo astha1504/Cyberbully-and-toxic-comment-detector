@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, BellOff, Check, CheckCheck, RefreshCw } from 'lucide-react';
 import { getNotifications, markAllNotifsRead } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
 import NotificationCard from '../components/NotificationCard';
 import toast from 'react-hot-toast';
 import './Notifications.css';
@@ -12,6 +13,7 @@ const TABS = ['All', 'Unread', 'Likes', 'Comments', 'Follows'];
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [activeTab, setActiveTab] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -21,21 +23,27 @@ const Notifications = () => {
 
   const fetchNotifications = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const { data } = await getNotifications();
       setNotifications(Array.isArray(data) ? data : []);
-    } catch {
-      // Backend may not have mock data yet; show empty state
+      return true;
+    } catch (error) {
       setNotifications([]);
+      setLoadError(getApiErrorMessage(error, 'Could not load notifications.'));
+      return false;
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchNotifications();
-    setRefreshing(false);
-    toast.success('Refreshed!');
+    try {
+      if (await fetchNotifications()) toast.success('Notifications refreshed.');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleMarkAllRead = async () => {
@@ -43,8 +51,8 @@ const Notifications = () => {
       await markAllNotifsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       toast.success('All marked as read');
-    } catch {
-      toast.error('Failed to mark all as read');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Could not mark notifications as read.'));
     }
   };
 
@@ -131,6 +139,13 @@ const Notifications = () => {
                 </div>
               </div>
             ))}
+          </div>
+        ) : loadError ? (
+          <div className="notifs-load-error" role="alert">
+            <p>{loadError}</p>
+            <button className="notifs-action-btn" onClick={handleRefresh} disabled={refreshing}>
+              Try again
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <motion.div

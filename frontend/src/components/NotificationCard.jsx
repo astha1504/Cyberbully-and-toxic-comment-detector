@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Heart, MessageCircle, UserPlus, Bell, AlertTriangle } from 'lucide-react';
 import { markNotifRead } from '../services/api';
+import { getApiErrorMessage } from '../utils/errorMessages';
+import toast from 'react-hot-toast';
 import './NotificationCard.css';
 
 const iconMap = {
@@ -33,7 +35,9 @@ const NotificationCard = ({ notif, onRead }) => {
       try {
         await markNotifRead(notif.id);
         onRead?.(notif.id);
-      } catch { /* silent */ }
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, 'Could not mark this notification as read.'));
+      }
     }
   };
 

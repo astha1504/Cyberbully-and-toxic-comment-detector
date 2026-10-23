@@ -22,7 +22,7 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  const unreadCount = notifications.length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const navItems = [
     { path: '/',                    icon: Home,         label: 'Home' },

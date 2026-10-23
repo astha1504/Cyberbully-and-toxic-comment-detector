@@ -1,5 +1,7 @@
 import os
 import json
+import asyncio
+import re
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
 from ..config import settings
@@ -15,10 +17,11 @@ _tokenizer = None
 _model = None
 _id2label = None
 _model_available = True
+_model_load_lock = asyncio.Lock()
 
 def _load_model():
     global _tokenizer, _model, _id2label, _model_available
-    
+
     weight_files = [
         os.path.join(MODEL_PATH, 'pytorch_model.bin'),
         os.path.join(MODEL_PATH, 'model.safetensors'),
@@ -27,7 +30,7 @@ def _load_model():
     has_weights = any(os.path.exists(p) for p in weight_files)
     quantized_path = os.path.join(MODEL_PATH, 'pytorch_model_quantized.bin')
     use_quantized = os.path.exists(quantized_path)
-    
+
     if not has_weights:
         print(f"Warning: Model weights not found at {MODEL_PATH}")
         _model_available = False
@@ -40,7 +43,7 @@ def _load_model():
             print(f"Error loading tokenizer: {e}")
             _model_available = False
             return
-            
+
     if _model is None:
         try:
             if use_quantized:
@@ -61,7 +64,7 @@ def _load_model():
             print(f"Error loading model: {e}")
             _model_available = False
             return
-            
+
     if _id2label is None:
         try:
             with open(os.path.join(MODEL_PATH, 'config.json'), 'r') as f:
@@ -70,57 +73,91 @@ def _load_model():
         except Exception:
             _id2label = {0: "non_offensive", 1: "toxic"}
 
+
+async def _ensure_model_loaded():
+    """Load the model once without blocking the async server event loop."""
+    if _model is not None or not _model_available:
+        return
+
+    async with _model_load_lock:
+        if _model is not None or not _model_available:
+            return
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _load_model)
+
 async def check_toxicity(text: str):
     """
     Analyzes text for toxicity.
     Flow: Keyword check -> ML model check.
     """
-    _load_model()
-    
-    text_lower = text.lower()
-    found_keywords = [kw for kw in TOXIC_KEYWORDS if kw in text_lower]
-    
+    await _ensure_model_loaded()
+
+    found_keywords = find_keyword_matches(text)
+    category_scores = get_category_scores(text)
+
     if found_keywords:
         return {
             "is_toxic": True,
             "score": 0.95,
             "label": "abusive",
-            "source": "keyword_match"
+            "source": "keyword_match",
+            "highlighted_words": found_keywords,
+            "category_scores": category_scores,
+            "category_score_source": "phrase_match"
         }
-    
+
     if not _model_available or _model is None or _tokenizer is None:
         return {
             "is_toxic": False,
             "score": 0.0,
             "label": "non_offensive",
-            "source": "fallback"
+            "source": "fallback",
+            "highlighted_words": [],
+            "category_scores": category_scores,
+            "category_score_source": "phrase_match"
         }
-        
+
     try:
-        inputs = _tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
-        with torch.no_grad():
-            outputs = _model(**inputs)
-            logits = outputs.logits
-            probabilities = torch.softmax(logits, dim=-1)
-            prediction = torch.argmax(logits, dim=-1).item()
-            
-            is_toxic = prediction != 0
-            label = _id2label.get(str(prediction)) or _id2label.get(prediction) or "unknown"
-            toxic_score = float(probabilities[0][1].item()) + (float(probabilities[0][2].item()) if probabilities.shape[1] > 2 else 0)
-            
-            return {
-                "is_toxic": bool(is_toxic),
-                "score": round(toxic_score, 4),
-                "label": label,
-                "source": "ml_model"
-            }
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, _run_model_inference, text)
+        return result
     except Exception as e:
         print(f"Prediction error: {e}")
         return {
             "is_toxic": False,
             "score": 0.0,
             "label": "error",
-            "source": "error"
+            "source": "error",
+            "highlighted_words": [],
+            "category_scores": category_scores,
+            "category_score_source": "phrase_match"
+        }
+
+
+def _run_model_inference(text: str) -> Dict[str, Any]:
+    inputs = _tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    with torch.no_grad():
+        outputs = _model(**inputs)
+        logits = outputs.logits
+        probabilities = torch.softmax(logits, dim=-1)
+        prediction = torch.argmax(logits, dim=-1).item()
+
+        is_toxic = prediction != 0
+        label = _id2label.get(str(prediction)) or _id2label.get(prediction) or "unknown"
+        toxic_index = next(
+            (int(index) for index, name in _id2label.items() if str(name).lower() == "toxic"),
+            1 if probabilities.shape[1] > 1 else 0,
+        )
+        toxic_score = float(probabilities[0][toxic_index].item())
+
+        return {
+            "is_toxic": bool(is_toxic),
+            "score": round(toxic_score, 4),
+            "label": label,
+            "source": "ml_model",
+            "highlighted_words": find_keyword_matches(text),
+            "category_scores": get_category_scores(text),
+            "category_score_source": "phrase_match"
         }
 
 TOXIC_KEYWORDS = [
@@ -129,6 +166,51 @@ TOXIC_KEYWORDS = [
     'randi', 'mullo', 'katua', 'saala', 'mc', 'bc', 'bkl', 'stupid', 'idiot',
     'hate', 'kill', 'worthless', 'useless', 'go away', 'nobody likes you'
 ]
+
+_INSULT_TERMS = (
+    "chutiya", "chuteya", "chutia", "bhenchod", "behenchod", "madarchod",
+    "motherfucker", "bastard", "lund", "gand", "kutta", "kaminey", "harami",
+    "randi", "mullo", "katua", "saala", "mc", "bc", "bkl", "stupid", "idiot",
+    "worthless", "useless",
+)
+_HARASSMENT_PHRASES = (
+    "go away", "nobody likes you", "shut up", "fuck off", "leave me alone",
+    "you are worthless", "you are useless", "you are stupid", "you are an idiot",
+)
+_THREAT_PATTERNS = (
+    re.compile(r"\b(?:i|we)'?ll\s+(?:kill|hurt|beat|attack|find)\s+you\b", re.I),
+    re.compile(r"\b(?:i|we)\s+(?:will|am going to|are going to)\s+(?:kill|hurt|beat|attack)\s+you\b", re.I),
+    re.compile(r"\byou(?:'| wi)ll regret (?:this|it)\b", re.I),
+)
+
+
+def find_keyword_matches(text: str) -> list[str]:
+    """Return exact matched phrases, using word boundaries to avoid substring hits."""
+    ordered = sorted(set(TOXIC_KEYWORDS), key=len, reverse=True)
+    pattern = re.compile(
+        r"(?<!\w)(?:" + "|".join(re.escape(term) for term in ordered) + r")(?!\w)",
+        re.I,
+    )
+    return list(dict.fromkeys(match.group(0) for match in pattern.finditer(text)))
+
+
+def get_category_scores(text: str) -> dict[str, int]:
+    """Rule-based phrase signals, not calibrated probabilities from the binary model."""
+    lowered = text.lower()
+    insult_hit = bool(find_keyword_matches(text) and any(
+        re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", lowered)
+        for term in _INSULT_TERMS
+    ))
+    harassment_hit = any(
+        re.search(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", lowered)
+        for phrase in _HARASSMENT_PHRASES
+    )
+    threat_hit = any(pattern.search(text) for pattern in _THREAT_PATTERNS)
+    return {
+        "insult": 100 if insult_hit else 0,
+        "harassment": 100 if harassment_hit else 0,
+        "threat": 100 if threat_hit else 0,
+    }
 
 async def check_chat_toxicity(
     text: str,
@@ -141,91 +223,102 @@ async def check_chat_toxicity(
     Considers friendship status, conversation history, and toxicity patterns.
     """
     from bson import ObjectId
-    
-    _load_model()
-    
-    text_lower = text.lower()
-    found_keywords = [kw for kw in TOXIC_KEYWORDS if kw in text_lower]
-    
+
+    await _ensure_model_loaded()
+
+    found_keywords = find_keyword_matches(text)
+
     sender = await users_collection.find_one({"_id": ObjectId(sender_id)})
     is_friend = sender and receiver_id in sender.get("friends", [])
-    
+
     context_score = 0.0
     context_label = "non_offensive"
-    
+    recent_messages = []
+    toxic_history = 0
+
     if conversation_id:
         recent_messages = await messages_collection.find({
             "conversation_id": conversation_id
         }).sort("created_at", -1).limit(10).to_list(10)
-        
-        toxic_history = sum(1 for m in recent_messages if m.get("is_toxic"))
+
+        toxic_history = sum(
+            1 for m in recent_messages
+            if m.get("is_toxic") and str(m.get("sender_id")) == sender_id
+        )
         context_score = min(toxic_history / 10, 1.0)
-        
+
         if toxic_history >= 5:
             context_label = "suppression_pattern"
         elif toxic_history >= 3:
             context_label = "potential_bullying"
-    
+
     if found_keywords:
         base_score = 0.85
-        threshold = 0.7 if is_friend else 0.5
         final_score = min(base_score + context_score, 1.0)
-        
+
         return {
-            "is_toxic": final_score >= threshold,
+            "is_toxic": final_score >= 0.5,
             "score": round(final_score, 4),
             "label": context_label if context_score > 0.5 else "abusive",
             "source": "keyword_match",
+            "highlighted_words": found_keywords,
+            "category_scores": get_category_scores(text),
+            "category_score_source": "phrase_match",
             "context": {
                 "is_friend": is_friend,
-                "friendship_score": 0.2 if is_friend else 0.0
+                "conversation_toxicity": context_score,
+                "recent_messages_considered": len(recent_messages),
+                "toxic_messages_from_sender": toxic_history,
             },
-            "warning": _get_contextual_warning(is_friend, "abusive")
+            "warning": _get_contextual_warning("abusive")
         }
-    
+
     if not _model_available or _model is None or _tokenizer is None:
         return {
             "is_toxic": False,
             "score": 0.0,
             "label": "non_offensive",
             "source": "fallback",
-            "context": {"is_friend": is_friend},
+            "highlighted_words": [],
+            "category_scores": get_category_scores(text),
+            "category_score_source": "phrase_match",
+            "context": {
+                "is_friend": is_friend,
+                "conversation_toxicity": context_score,
+                "recent_messages_considered": len(recent_messages),
+                "toxic_messages_from_sender": toxic_history,
+            },
             "warning": None
         }
-    
+
     try:
-        inputs = _tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
-        with torch.no_grad():
-            outputs = _model(**inputs)
-            logits = outputs.logits
-            probabilities = torch.softmax(logits, dim=-1)
-            prediction = torch.argmax(logits, dim=-1).item()
-            
-            is_toxic = prediction != 0
-            label = _id2label.get(str(prediction)) or _id2label.get(prediction) or "unknown"
-            
-            ml_score = float(probabilities[0][1].item()) + (float(probabilities[0][2].item()) if probabilities.shape[1] > 2 else 0)
-            friendship_modifier = 0.2 if is_friend else 0.0
-            final_score = min(ml_score + context_score - friendship_modifier, 1.0)
-            
-            threshold = 0.6 if is_friend else 0.4
-            actually_toxic = final_score >= threshold
-            
-            if actually_toxic and context_score > 0.3:
-                label = context_label if context_label != "non_offensive" else label
-            
-            return {
-                "is_toxic": actually_toxic,
-                "score": round(final_score, 4),
-                "label": label,
-                "source": "ml_model",
-                "context": {
-                    "is_friend": is_friend,
-                    "conversation_toxicity": context_score,
-                    "friendship_modifier": friendship_modifier
-                },
-                "warning": _get_contextual_warning(is_friend, label) if actually_toxic else None
-            }
+        loop = asyncio.get_running_loop()
+        ml_result = await loop.run_in_executor(None, _run_model_inference, text)
+        ml_score = ml_result["score"]
+        label = ml_result["label"]
+
+        final_score = min(ml_score + context_score, 1.0)
+        actually_toxic = final_score >= 0.5
+
+        if actually_toxic and context_score > 0.3:
+            label = context_label if context_label != "non_offensive" else ml_result["label"]
+
+        return {
+            "is_toxic": actually_toxic,
+            "score": round(final_score, 4),
+            "label": label,
+            "source": "ml_model",
+            "highlighted_words": ml_result.get("highlighted_words", []),
+            "category_scores": get_category_scores(text),
+            "category_score_source": "phrase_match",
+            "context": {
+                "is_friend": is_friend,
+                "conversation_toxicity": context_score,
+                "recent_messages_considered": len(recent_messages) if conversation_id else 0,
+                "toxic_messages_from_sender": toxic_history if conversation_id else 0,
+            },
+            "warning": _get_contextual_warning(label) if actually_toxic else None
+        }
     except Exception as e:
         print(f"Chat prediction error: {e}")
         return {
@@ -233,13 +326,14 @@ async def check_chat_toxicity(
             "score": 0.0,
             "label": "error",
             "source": "error",
+            "highlighted_words": [],
+            "category_scores": get_category_scores(text),
+            "category_score_source": "phrase_match",
             "context": {"is_friend": is_friend},
             "warning": None
         }
 
-def _get_contextual_warning(is_friend: bool, label: str) -> str:
-    if is_friend:
-        return "Friendly teasing detected. Keep it respectful."
+def _get_contextual_warning(label: str) -> str:
     if label in ("hate_speech", "suppression_pattern"):
         return "Harassment detected. This behavior violates community guidelines."
     return "Potentially harmful language detected. Please review your message."

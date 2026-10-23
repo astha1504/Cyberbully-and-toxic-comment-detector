@@ -11,6 +11,23 @@
   margin-bottom: 20px;
 }
 
+.explore-error {
+  margin-bottom: 14px;
+  padding: 0.75rem 0.9rem;
+  color: #842828;
+  background: #fff1f1;
+  border: 1px solid #f0caca;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+[data-theme='dark'] .explore-error {
+  color: #ffd0d0;
+  background: #392527;
+  border-color: #684044;
+}
+
 .explore-search-bar {
   position: relative;
   display: flex;
