@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Activity, ArrowUpRight, BarChart3, Bell, ChevronDown, ClipboardList, Compass,
+  Activity, BarChart3, Bell, ChevronDown, ClipboardList, Compass,
   FileText, Home, LifeBuoy, LogOut, MessageCircle,
   Moon, Plus, ShieldCheck, Sun, User
 } from 'lucide-react';
@@ -125,13 +125,6 @@ const Navbar = () => {
               )}
             </section>
           ))}
-        </div>
-
-        <div className="sidebar-safety-card">
-          <span className="sidebar-safety-icon"><ShieldCheck size={17} /></span>
-          <strong>Something feel off?</strong>
-          <p>Check a suspicious message before you respond.</p>
-          <Link to="/safety/scan">Open safety center <ArrowUpRight size={12} aria-hidden="true" /></Link>
         </div>
 
         <div className="navbar-bottom">

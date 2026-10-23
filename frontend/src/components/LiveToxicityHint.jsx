@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, MessageCircle } from 'lucide-react';
 import { checkToxicity } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
 import './LiveToxicityHint.css';
 
-const LiveToxicityHint = ({ text = '', children }) => {
+const LiveToxicityHint = ({ text = '', conversationId, children }) => {
   const [result, setResult] = useState(null);
   const [checking, setChecking] = useState(false);
   const [unavailable, setUnavailable] = useState('');
@@ -24,7 +24,9 @@ const LiveToxicityHint = ({ text = '', children }) => {
     const timer = setTimeout(async () => {
       setChecking(true);
       try {
-        const { data } = await checkToxicity(content);
+        const { data } = conversationId
+          ? await checkToxicity(content, conversationId)
+          : await checkToxicity(content);
         if (current) {
           setResult(data);
           setUnavailable(data.verified === false
@@ -44,9 +46,9 @@ const LiveToxicityHint = ({ text = '', children }) => {
       current = false;
       clearTimeout(timer);
     };
-  }, [text]);
+  }, [text, conversationId]);
 
-  if (!checking && !result?.isToxic && !unavailable) return null;
+  if (!checking && !result?.isToxic && !result?.contextual && !unavailable) return null;
 
   return (
     <div className={`live-toxicity-hint ${result?.isToxic ? 'is-flagged' : ''}`} role="status" aria-live="polite">
@@ -56,11 +58,21 @@ const LiveToxicityHint = ({ text = '', children }) => {
         <span className="live-hint-message">{unavailable}</span>
       ) : (
         <>
-          <AlertTriangle size={15} aria-hidden="true" />
-          <span className="live-hint-message">This wording may hurt others.</span>
-          <span className="live-hint-score">{Math.round((result.score || 0) * 100)}% overall score</span>
-          {result.highlightedWords?.length > 0 && (
-            <span className="live-hint-words">Matched: {result.highlightedWords.join(', ')}</span>
+          {result.contextual && !result.isToxic ? (
+            <>
+              <MessageCircle size={14} aria-hidden="true" />
+              <span className="live-hint-context">Recent chat context used</span>
+            </>
+          ) : (
+            <>
+              <AlertTriangle size={15} aria-hidden="true" />
+              <span className="live-hint-message">This wording may hurt others.</span>
+              <span className="live-hint-score">{Math.round((result.score || 0) * 100)}% overall score</span>
+              {result.highlightedWords?.length > 0 && (
+                <span className="live-hint-words">Matched: {result.highlightedWords.join(', ')}</span>
+              )}
+              {result.contextual && <span className="live-hint-context">Recent chat context used</span>}
+            </>
           )}
           {children}
         </>

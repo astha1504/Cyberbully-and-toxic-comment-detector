@@ -1,10 +1,12 @@
 import logging
 import httpx
+from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Optional
 from ..config import settings
-from ..services.moderation_service import check_toxicity
+from ..database import conversations_collection
+from ..services.moderation_service import check_chat_toxicity, check_toxicity
 from ..services.image_ocr import extract_text_from_image_data
 from ..routes.auth import get_current_user
 
@@ -29,6 +31,7 @@ def _provider_error_code(response: httpx.Response) -> Optional[str]:
 
 class CheckTextRequest(BaseModel):
     text: str
+    conversation_id: Optional[str] = None
 
 
 class CheckTextResponse(BaseModel):
@@ -39,6 +42,7 @@ class CheckTextResponse(BaseModel):
     verified: bool
     categoryScores: dict[str, int]
     categoryScoreSource: str
+    contextual: bool = False
 
 
 def _severity_from_score(score: float) -> str:
@@ -54,7 +58,30 @@ async def check_text(request: CheckTextRequest, current_user: dict = Depends(get
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-    result = await check_toxicity(request.text)
+    if request.conversation_id:
+        if not ObjectId.is_valid(request.conversation_id):
+            raise HTTPException(status_code=400, detail="Invalid conversation ID")
+        user_id = str(current_user["_id"])
+        conversation = await conversations_collection.find_one({
+            "_id": ObjectId(request.conversation_id),
+            "participants": user_id,
+        })
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        receiver_id = next(
+            (participant for participant in conversation.get("participants", []) if participant != user_id),
+            None,
+        )
+        if not receiver_id:
+            raise HTTPException(status_code=404, detail="Conversation partner not found")
+        result = await check_chat_toxicity(
+            request.text,
+            user_id,
+            receiver_id,
+            request.conversation_id,
+        )
+    else:
+        result = await check_toxicity(request.text)
 
     return {
         "isToxic": result["is_toxic"],
@@ -62,6 +89,7 @@ async def check_text(request: CheckTextRequest, current_user: dict = Depends(get
         "highlightedWords": result.get("highlighted_words", []),
         "severity": _severity_from_score(result["score"]),
         "verified": result.get("source") not in {"fallback", "error"},
+        "contextual": result.get("source") == "contextual_ml_model",
         "categoryScores": result.get("category_scores", {}),
         "categoryScoreSource": result.get("category_score_source", "phrase_match"),
     }

@@ -10,7 +10,8 @@ import { getApiErrorMessage } from '../utils/errorMessages';
 import { formatIndiaTime } from '../utils/dateTime';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile, AlertTriangle, Mic, MessageCircle
+  Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile, AlertTriangle,
+  Mic, MessageCircle, Square, X, Trash2
 } from 'lucide-react';
 import { checkAudioToxicity } from '../services/api';
 import toast from 'react-hot-toast';
@@ -18,6 +19,7 @@ import LiveToxicityHint from '../components/LiveToxicityHint';
 import './Chat.css';
 
 const DEFAULT_AVATAR = '/placeholder-avatar.svg';
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 
 const Chat = () => {
   const { user } = useAuth();
@@ -40,9 +42,19 @@ const Chat = () => {
   const [toxicityWarning, setToxicityWarning] = useState(null);
   const [revealedMessages, setRevealedMessages] = useState({});
   const [checkingAudio, setCheckingAudio] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState('');
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const audioInputRef = useRef(null);
+  const recorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const recordingChunksRef = useRef([]);
+  const recordingBytesRef = useRef(0);
+  const recordingTimerRef = useRef(null);
+  const discardRecordingRef = useRef(false);
+  const oversizedRecordingRef = useRef(false);
   const handledTargetRef = useRef('');
   const conversationsRef = useRef(conversations);
   const activeConvRef = useRef(activeConv);
@@ -72,6 +84,26 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (!recordedAudio || typeof URL.createObjectURL !== 'function') {
+      setRecordedAudioUrl('');
+      return undefined;
+    }
+    const url = URL.createObjectURL(recordedAudio);
+    setRecordedAudioUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [recordedAudio]);
+
+  useEffect(() => () => {
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    if (recorderRef.current?.state === 'recording') {
+      recorderRef.current.ondataavailable = null;
+      recorderRef.current.onstop = null;
+      recorderRef.current.stop();
+    }
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -201,6 +233,14 @@ const Chat = () => {
   }, []);
 
   const selectConversation = useCallback(async (conv) => {
+    if (recorderRef.current?.state === 'recording') {
+      discardRecordingRef.current = true;
+      recorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    recordingTimerRef.current = null;
+    setIsRecording(false);
+    setRecordedAudio(null);
     activeConvRef.current = conv;
     setActiveConv(conv);
     setMessages([]);
@@ -361,30 +401,128 @@ const Chat = () => {
     typingTimeoutRef.current = setTimeout(() => emitTyping(false), 2000);
   };
 
-  const handleAudioSelect = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error('Voice notes must be 20 MB or smaller');
+  const stopRecordingTimer = () => {
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    recordingTimerRef.current = null;
+  };
+
+  const startAudioRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      toast.error('Audio recording is not supported in this browser.');
       return;
     }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const preferredType = [
+        'audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg'
+      ].find((type) => MediaRecorder.isTypeSupported?.(type));
+      const recorder = preferredType
+        ? new MediaRecorder(stream, { mimeType: preferredType })
+        : new MediaRecorder(stream);
+
+      recordingChunksRef.current = [];
+      recordingBytesRef.current = 0;
+      discardRecordingRef.current = false;
+      oversizedRecordingRef.current = false;
+      recorder.ondataavailable = (event) => {
+        if (!event.data?.size) return;
+        recordingBytesRef.current += event.data.size;
+        recordingChunksRef.current.push(event.data);
+        if (recordingBytesRef.current > MAX_AUDIO_BYTES) {
+          oversizedRecordingRef.current = true;
+          if (recorder.state === 'recording') recorder.stop();
+        }
+      };
+      recorder.onerror = () => {
+        toast.error('The recording stopped unexpectedly. Please try again.');
+        setIsRecording(false);
+        stopRecordingTimer();
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      recorder.onstop = () => {
+        setIsRecording(false);
+        stopRecordingTimer();
+        stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        recorderRef.current = null;
+
+        if (discardRecordingRef.current) {
+          discardRecordingRef.current = false;
+          recordingChunksRef.current = [];
+          return;
+        }
+        if (oversizedRecordingRef.current) {
+          toast.error('Voice recordings must be 20 MB or smaller.');
+          recordingChunksRef.current = [];
+          return;
+        }
+
+        const audio = new Blob(recordingChunksRef.current, {
+          type: recorder.mimeType || recordingChunksRef.current[0]?.type || 'audio/webm',
+        });
+        recordingChunksRef.current = [];
+        if (!audio.size) {
+          toast.error('No audio was recorded. Please try again.');
+          return;
+        }
+        setRecordedAudio(audio);
+      };
+
+      recorderRef.current = recorder;
+      recorder.start(1000);
+      setRecordingSeconds(0);
+      setIsRecording(true);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((seconds) => seconds + 1);
+      }, 1000);
+    } catch (error) {
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+      toast.error(error.name === 'NotAllowedError'
+        ? 'Allow microphone access to record a voice note.'
+        : 'Could not start the microphone. Check your audio device and try again.');
+    }
+  };
+
+  const stopAudioRecording = () => {
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+  };
+
+  const cancelAudioRecording = () => {
+    discardRecordingRef.current = true;
+    stopAudioRecording();
+    setIsRecording(false);
+    stopRecordingTimer();
+  };
+
+  const discardRecordedAudio = () => setRecordedAudio(null);
+
+  const transcribeRecordedAudio = async () => {
+    if (!recordedAudio) return;
+    const mimeType = recordedAudio.type || 'audio/webm';
+    const extension = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'm4a' : 'webm';
+    const file = new File([recordedAudio], `voice-note.${extension}`, { type: mimeType });
     setCheckingAudio(true);
     try {
       const { data } = await checkAudioToxicity(file);
       if (!data.transcription?.trim()) {
-        toast.error('No speech was detected in that recording');
+        toast.error('No speech was detected in the recording.');
         return;
       }
       setToxicityWarning(null);
       setNewMessage(data.transcription.trim());
-      toast.success('Transcript added to the message field. Review the transcript before sending.');
+      setRecordedAudio(null);
+      toast.success('Transcript added to the message field. Review it, then choose Send.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Could not check this voice note.'));
+      toast.error(getApiErrorMessage(error, 'Could not transcribe this recording.'));
     } finally {
       setCheckingAudio(false);
     }
   };
+
+  const recordingTimeLabel = `${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`;
 
   const emitTyping = (isTyping) => {
     if (socket && activeConv) {
@@ -602,25 +740,53 @@ const filteredConversations = conversations.filter((conv) =>
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="live-chat-hint"><LiveToxicityHint text={newMessage} /></div>
+            {isRecording && (
+              <div className="voice-recorder-panel" role="status">
+                <div className="voice-recording-status">
+                  <span className="voice-recording-indicator" />
+                  <strong>Recording voice note</strong>
+                  <time>{recordingTimeLabel}</time>
+                </div>
+                <div className="voice-recorder-actions">
+                  <button type="button" className="voice-recorder-button voice-recorder-stop" onClick={stopAudioRecording}>
+                    <Square size={15} /> Stop recording
+                  </button>
+                  <button type="button" className="voice-recorder-button" onClick={cancelAudioRecording}>
+                    <X size={16} /> Discard
+                  </button>
+                </div>
+              </div>
+            )}
+            {recordedAudio && !isRecording && (
+              <div className="voice-recorder-panel voice-preview-panel">
+                <div className="voice-preview-heading">
+                  <strong>Recording ready</strong>
+                  <button type="button" className="voice-icon-button" aria-label="Discard recording" onClick={discardRecordedAudio}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                {recordedAudioUrl && <audio controls src={recordedAudioUrl} aria-label="Preview recorded voice note" />}
+                <p>Transcribe to review the words before sending. The recording goes to the configured speech-to-text service only after you choose Transcribe.</p>
+                <button type="button" className="voice-recorder-button voice-recorder-primary" onClick={transcribeRecordedAudio} disabled={checkingAudio}>
+                  {checkingAudio ? <span className="voice-check-spinner" /> : <Mic size={16} />}
+                  {checkingAudio ? 'Transcribing…' : 'Transcribe and review'}
+                </button>
+              </div>
+            )}
+            <div className="live-chat-hint">
+              <LiveToxicityHint text={newMessage} conversationId={activeConv.id} />
+            </div>
             <form className="message-input-area" onSubmit={sendMessage}>
               <button
                 type="button"
-                className="voice-check-btn"
-                aria-label="Transcribe and check voice note; audio is sent to the configured transcription provider"
-                title="Transcribe and check voice note"
-                disabled={checkingAudio || !activeConv}
-                onClick={() => audioInputRef.current?.click()}
+                className={`voice-check-btn ${isRecording ? 'is-recording' : ''}`}
+                aria-label={isRecording ? 'Stop recording voice note' : 'Record a voice note'}
+                title={isRecording ? 'Stop recording' : 'Record a voice note'}
+                disabled={checkingAudio || !activeConv || Boolean(recordedAudio)}
+                onClick={isRecording ? stopAudioRecording : startAudioRecording}
               >
-                {checkingAudio ? <span className="voice-check-spinner" /> : <Mic size={18} />}
+                {isRecording ? <Square size={16} /> : <Mic size={18} />}
               </button>
-              <input
-                ref={audioInputRef}
-                type="file"
-                accept="audio/*,video/mp4,video/webm"
-                hidden
-                onChange={handleAudioSelect}
-              />
               <input
                 type="text"
                 placeholder="Type a message..."
@@ -632,6 +798,7 @@ const filteredConversations = conversations.filter((conv) =>
               <motion.button
                 type="submit"
                 className="send-btn"
+                aria-label="Send message"
                 disabled={!newMessage.trim()}
                 whileTap={{ scale: 0.9 }}
                 id="send-message-btn"

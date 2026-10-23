@@ -85,7 +85,10 @@ export const getToxicityTrend     = () => API.get('/analytics/toxicity-trend');
 export const getUserBehaviour    = () => API.get('/analytics/user-behaviour');
 
 // ── Toxicity ──────────────────────────────────────────────────────────────────
-export const checkToxicity = (text) => API.post('/api/moderation/check-text', { text });
+export const checkToxicity = (text, conversationId) => API.post('/api/moderation/check-text', {
+  text,
+  ...(conversationId ? { conversation_id: conversationId } : {}),
+});
 export const checkImageToxicity = (imageData) => API.post('/api/moderation/check-image', { image_data: imageData });
 export const checkAudioToxicity = (file) => {
   const body = new FormData();

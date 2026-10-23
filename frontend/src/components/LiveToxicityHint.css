@@ -36,6 +36,10 @@
   font-weight: 650;
 }
 
+.live-hint-context {
+  font-weight: 600;
+}
+
 .live-toxicity-hint svg {
   flex: 0 0 auto;
 }

@@ -6,6 +6,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
 from ..config import settings
 from ..database import users_collection, messages_collection
+from .context_service import build_contextual_input
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
@@ -134,8 +135,8 @@ async def check_toxicity(text: str):
         }
 
 
-def _run_model_inference(text: str) -> Dict[str, Any]:
-    inputs = _tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+def _run_model_inference(text: str, contextual_input: Optional[str] = None) -> Dict[str, Any]:
+    inputs = _tokenizer(contextual_input or text, return_tensors="pt", truncation=True, max_length=512)
     with torch.no_grad():
         outputs = _model(**inputs)
         logits = outputs.logits
@@ -174,9 +175,15 @@ _INSULT_TERMS = (
     "randi", "mullo", "katua", "saala", "mc", "bc", "bkl", "stupid", "idiot",
     "asshole", "assholes", "worthless", "useless",
 )
+_CONTEXT_SENSITIVE_KEYWORDS = {
+    "asshole", "assholes", "stupid", "idiot", "worthless", "useless", "hate", "kill",
+}
 _HARASSMENT_PHRASES = (
     "go away", "nobody likes you", "shut up", "fuck off", "leave me alone",
     "you are worthless", "you are useless", "you are stupid", "you are an idiot",
+)
+_HARD_HARASSMENT_PHRASES = (
+    "go away", "nobody likes you", "shut up", "fuck off", "leave me alone",
 )
 _THREAT_PATTERNS = (
     re.compile(r"\b(?:i|we)'?ll\s+(?:kill|hurt|beat|attack|find)\s+you\b", re.I),
@@ -235,12 +242,18 @@ async def check_chat_toxicity(
     context_score = 0.0
     context_label = "non_offensive"
     recent_messages = []
+    conversation_messages = []
     toxic_history = 0
 
     if conversation_id:
         recent_messages = await messages_collection.find({
             "conversation_id": conversation_id
         }).sort("created_at", -1).limit(10).to_list(10)
+
+        conversation_messages = [
+            message for message in reversed(recent_messages)
+            if isinstance(message.get("content"), str) and message["content"].strip()
+        ]
 
         toxic_history = sum(
             1 for m in recent_messages
@@ -253,7 +266,23 @@ async def check_chat_toxicity(
         elif toxic_history >= 3:
             context_label = "potential_bullying"
 
-    if found_keywords:
+    contains_explicit_threat = any(pattern.search(text) for pattern in _THREAT_PATTERNS)
+    contains_clear_harassment = any(
+        re.search(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)", text, re.I)
+        for phrase in _HARD_HARASSMENT_PHRASES
+    )
+    use_context_for_keywords = (
+        bool(found_keywords)
+        and bool(conversation_messages)
+        and _model_available
+        and _model is not None
+        and _tokenizer is not None
+        and all(word.lower() in _CONTEXT_SENSITIVE_KEYWORDS for word in found_keywords)
+        and not contains_explicit_threat
+        and not contains_clear_harassment
+    )
+
+    if found_keywords and not use_context_for_keywords:
         base_score = 0.85
         final_score = min(base_score + context_score, 1.0)
 
@@ -294,7 +323,13 @@ async def check_chat_toxicity(
 
     try:
         loop = asyncio.get_running_loop()
-        ml_result = await loop.run_in_executor(None, _run_model_inference, text)
+        contextual_input = build_contextual_input(conversation_messages, text, sender_id)
+        ml_result = await loop.run_in_executor(
+            None,
+            _run_model_inference,
+            text,
+            contextual_input,
+        )
         ml_score = ml_result["score"]
         label = ml_result["label"]
 
@@ -308,7 +343,7 @@ async def check_chat_toxicity(
             "is_toxic": actually_toxic,
             "score": round(final_score, 4),
             "label": label,
-            "source": "ml_model",
+            "source": "contextual_ml_model" if conversation_messages else "ml_model",
             "highlighted_words": ml_result.get("highlighted_words", []),
             "category_scores": get_category_scores(text),
             "category_score_source": "phrase_match",
@@ -316,6 +351,7 @@ async def check_chat_toxicity(
                 "is_friend": is_friend,
                 "conversation_toxicity": context_score,
                 "recent_messages_considered": len(recent_messages) if conversation_id else 0,
+                "conversation_messages_used": len(conversation_messages),
                 "toxic_messages_from_sender": toxic_history if conversation_id else 0,
             },
             "warning": _get_contextual_warning(label) if actually_toxic else None

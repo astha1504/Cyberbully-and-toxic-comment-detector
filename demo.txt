@@ -351,12 +351,19 @@ CHAT
 5. Check the warning, pending state, delivered message, and behavior count.
 6. Use Send Anyway only with the repeat-offender test account. A third finding mutes the account.
 
+CONTEXT-AWARE CHAT CHECK
+1. Keep two demo accounts in the same conversation.
+2. Exchange a few friendly messages, such as: "How did the demo prep go?" and "Good. I finished the new chat flow."
+3. Type: "You're such an idiot at chess. I'm teasing." Confirm the chat hint says recent chat context was used.
+4. Compare the result with the same wording in the standalone text check. The chat check includes up to 10 recent messages. The standalone check has no conversation context.
+5. Direct threats and hard harassment phrases stay flagged regardless of friendly history. Do not use Send Anyway unless you intend to add a moderation finding to the demo account.
+
 VOICE
-1. Record a short WAV, MP3, M4A, OGG, or WEBM clip using the voice test script.
-2. Select the microphone button in Chat and upload the clip.
-3. Confirm a transcript appears for review and its wording receives a safety check.
-4. Do not rely on voice during the live slot until a real Groq transcription request succeeds.
-5. Audio uploads must stay under 20 MB. The transcript is shown before sending.
+1. Open a chat and select the microphone button. Allow microphone access, speak the voice test script, then stop recording.
+2. Play back the recording. Select Transcribe and review to send the recording to the configured speech-to-text service.
+3. Review the transcript in the message field. Confirm its wording receives a safety check, then select Send to deliver the transcript as a text message.
+4. The chat sends the reviewed transcript, not a playable audio attachment. Recording stays in the browser until you select Transcribe and review.
+5. Recordings must stay under 20 MB. Do not rely on voice during the live slot until a real Groq transcription request succeeds.
 
 REPEAT-OFFENDER MUTE
 1. Use pattern_demo only.

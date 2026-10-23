@@ -29,6 +29,24 @@ def build_context_prompt(messages: List[Dict[str, Any]], current_text: str, curr
     return "\n".join(lines)
 
 
+def build_contextual_input(messages: List[Dict[str, Any]], current_text: str, current_user_id: str) -> str:
+    """Put the new message first, followed by recent dialogue for classifier context."""
+    context_lines = []
+    for message in messages[-10:]:
+        content = " ".join(str(message.get("content", "")).split())[:200]
+        if not content:
+            continue
+        sender_id = str(message.get("sender_id", ""))
+        speaker = "You" if sender_id == str(current_user_id) else "Other participant"
+        flagged = " [previously flagged]" if message.get("is_toxic") else ""
+        context_lines.append(f"{speaker}{flagged}: {content}")
+
+    current_line = f"Current message to review: {current_text}"
+    if not context_lines:
+        return current_text
+    return f"{current_line}\nRecent conversation context:\n" + "\n".join(context_lines)
+
+
 async def compute_context_score(conversation_id: str) -> Dict[str, Any]:
     messages = await get_conversation_context(conversation_id, limit=10)
     toxic_count = sum(1 for m in messages if m.get("is_toxic"))

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   AlertTriangle, ArrowUpRight, Check, FileImage, Loader2,
-  MessageSquare, Mic, ShieldCheck, Upload
+  MessageSquare, Mic, ShieldCheck, Upload, X
 } from 'lucide-react';
 import { analyzeCyberSafety, checkAudioToxicity, checkImageToxicity } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
@@ -9,6 +9,13 @@ import './CyberSafetyScanner.css';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
+const IMAGE_TYPES = {
+  'image/jpeg': ['jpg', 'jpeg'],
+  'image/png': ['png'],
+  'image/webp': ['webp'],
+  'image/tiff': ['tif', 'tiff'],
+  'image/bmp': ['bmp'],
+};
 const MODES = [
   { id: 'text', label: 'Message', icon: MessageSquare },
   { id: 'image', label: 'Screenshot', icon: FileImage },
@@ -22,6 +29,17 @@ const readAsDataUrl = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+const getImageMimeType = (file) => {
+  const mimeType = file.type?.toLowerCase();
+  if (Object.hasOwn(IMAGE_TYPES, mimeType)) return mimeType;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return Object.entries(IMAGE_TYPES).find(([, extensions]) => extensions.includes(extension))?.[0] || '';
+};
+
+const formatFileSize = (size) => size < 1024 * 1024
+  ? `${Math.max(1, Math.round(size / 1024))} KB`
+  : `${(size / (1024 * 1024)).toFixed(1)} MB`;
+
 const CyberSafetyScanner = () => {
   const [mode, setMode] = useState('text');
   const [message, setMessage] = useState('');
@@ -31,6 +49,7 @@ const CyberSafetyScanner = () => {
   const [appInstalled, setAppInstalled] = useState(false);
   const [voiceConsent, setVoiceConsent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState('Checking signals…');
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [scannedText, setScannedText] = useState('');
@@ -46,6 +65,50 @@ const CyberSafetyScanner = () => {
     setCredentialsShared(false);
     setMoneyLost(false);
     setAppInstalled(false);
+  };
+
+  const selectFile = (event, fileMode) => {
+    const selectedFile = event.target.files?.[0] || null;
+    if (!selectedFile) return;
+
+    if (!selectedFile.size) {
+      setFile(null);
+      setError('This file is empty. Choose another file.');
+      event.target.value = '';
+      return;
+    }
+    if (fileMode === 'image' && !getImageMimeType(selectedFile)) {
+      setFile(null);
+      setError('Choose a JPEG, PNG, WEBP, TIFF, or BMP screenshot.');
+      event.target.value = '';
+      return;
+    }
+    if (fileMode === 'image' && selectedFile.size > MAX_IMAGE_BYTES) {
+      setFile(null);
+      setError('Screenshots must be 8 MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+    if (fileMode === 'audio' && selectedFile.size > MAX_AUDIO_BYTES) {
+      setFile(null);
+      setError('Voice notes must be 20 MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+
+    setFile(selectedFile);
+    setError('');
+    setResult(null);
+    setScannedText('');
+    if (fileMode === 'audio') setVoiceConsent(false);
+  };
+
+  const removeSelectedFile = () => {
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setError('');
+    setResult(null);
+    setScannedText('');
   };
 
   const scan = async (event) => {
@@ -68,14 +131,18 @@ const CyberSafetyScanner = () => {
     }
 
     setLoading(true);
+    setLoadingLabel(mode === 'image' ? 'Uploading and reading screenshot…' : mode === 'audio' ? 'Transcribing voice note…' : 'Checking signals…');
+    let requestStage = mode === 'image' ? 'image-ocr' : mode === 'audio' ? 'voice-transcription' : 'analysis';
     try {
       let textToScan = message.trim();
       if (mode === 'image') {
-        if (!file.type.startsWith('image/') || file.size > MAX_IMAGE_BYTES) {
+        const imageMimeType = getImageMimeType(file);
+        if (!imageMimeType || file.size > MAX_IMAGE_BYTES) {
           throw new Error('Choose a supported image up to 8 MB.');
         }
-        const imageData = await readAsDataUrl(file);
+        const imageData = (await readAsDataUrl(file)).replace(/^data:[^,]*,/, `data:${imageMimeType};base64,`);
         const { data } = await checkImageToxicity(imageData);
+        requestStage = 'analysis';
         textToScan = data?.detectedText?.trim() || '';
         if (!textToScan) {
           throw new Error('No readable text found. Try a clearer screenshot or paste the message.');
@@ -83,15 +150,24 @@ const CyberSafetyScanner = () => {
       } else if (mode === 'audio') {
         if (file.size > MAX_AUDIO_BYTES) throw new Error('Choose an audio file up to 20 MB.');
         const { data } = await checkAudioToxicity(file);
+        requestStage = 'analysis';
         textToScan = data?.transcription?.trim() || '';
         if (!textToScan) throw new Error('No speech was transcribed. Try a clearer recording or paste the message.');
       }
 
+      if (mode !== 'text') setLoadingLabel('Checking scam signals…');
       setScannedText(textToScan);
       const { data } = await analyzeCyberSafety(textToScan, moneyLost, credentialsShared);
       setResult(data);
     } catch (scanError) {
-      setError(scanError?.response ? getApiErrorMessage(scanError, 'The scan could not be completed.') : scanError.message || 'The scan could not be completed.');
+      const apiMessage = scanError?.response
+        ? getApiErrorMessage(scanError, 'The scan could not be completed.')
+        : scanError.message || 'The scan could not be completed.';
+      if (requestStage === 'image-ocr' && scanError?.response?.status === 503 && apiMessage === 'This service is temporarily unavailable. Please try again shortly.') {
+        setError('Pehra received the screenshot, but OCR is unavailable. Check TESSERACT_CMD and TESSERACT_LANG in backend/.env, then restart FastAPI.');
+      } else {
+        setError(apiMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -154,17 +230,29 @@ const CyberSafetyScanner = () => {
           )}
 
           {mode === 'image' && (
-            <label className="cyber-scan-file-picker">
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/tiff,image/bmp"
-                ref={fileInputRef}
-                onChange={(event) => { setFile(event.target.files?.[0] || null); setError(''); setResult(null); setScannedText(''); }}
-              />
-              <span className="cyber-file-icon"><Upload size={19} /></span>
-              <strong>{file?.name || 'Choose a screenshot'}</strong>
-              <span>JPEG, PNG, WEBP, TIFF, or BMP. Maximum 8 MB.</span>
-            </label>
+            <div className="cyber-screenshot-upload">
+              <label className="cyber-scan-file-picker">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/tiff,image/bmp"
+                  ref={fileInputRef}
+                  onChange={(event) => selectFile(event, 'image')}
+                />
+                <span className="cyber-file-icon"><Upload size={19} /></span>
+                <strong>{file ? 'Replace screenshot' : 'Choose a screenshot'}</strong>
+                <span>JPEG, PNG, WEBP, TIFF, or BMP. Maximum 8 MB.</span>
+              </label>
+              {file && (
+                <div className="cyber-selected-file" aria-live="polite">
+                  <span className="cyber-selected-file-icon"><FileImage size={18} /></span>
+                  <span className="cyber-selected-file-copy">
+                    <strong>{file.name}</strong>
+                    <small>{formatFileSize(file.size)}. Ready for OCR when you select Check for scam signals.</small>
+                  </span>
+                  <button type="button" className="cyber-remove-file" onClick={removeSelectedFile} aria-label="Remove selected screenshot"><X size={16} /></button>
+                </div>
+              )}
+            </div>
           )}
 
           {mode === 'audio' && (
@@ -174,7 +262,7 @@ const CyberSafetyScanner = () => {
                   type="file"
                   accept="audio/flac,audio/mpeg,audio/mp4,audio/mp4a-latm,audio/ogg,audio/wav,audio/webm,video/mp4,video/webm"
                   ref={fileInputRef}
-                  onChange={(event) => { setFile(event.target.files?.[0] || null); setVoiceConsent(false); setError(''); setResult(null); setScannedText(''); }}
+                  onChange={(event) => selectFile(event, 'audio')}
                 />
                 <span className="cyber-file-icon"><Mic size={19} /></span>
                 <strong>{file?.name || 'Choose a voice note or recording'}</strong>
@@ -199,7 +287,7 @@ const CyberSafetyScanner = () => {
           <div className="cyber-scan-actions">
             <button className="cyber-scan-submit" type="submit" disabled={loading}>
               {loading ? <Loader2 className="cyber-spin" size={17} /> : <ShieldCheck size={17} />}
-              {loading ? 'Checking signals…' : 'Check for scam signals'}
+              {loading ? loadingLabel : 'Check for scam signals'}
             </button>
             <span>Signal-based guidance. No message is a confirmed scam from this scan alone.</span>
           </div>
@@ -266,7 +354,7 @@ const CyberSafetyScanner = () => {
           </div>
         )}
 
-        <p className="cyber-data-note">Text and screenshots go to the platform backend for analysis. Voice recordings also go to the configured transcription provider. The scan route does not store submitted content.</p>
+        <p className="cyber-data-note">Screenshots upload for OCR when you select Check for scam signals. Pehra does not save scan screenshots. To keep a screenshot with a case, add it separately under Prepare a report.</p>
       </form>
     </section>
   );

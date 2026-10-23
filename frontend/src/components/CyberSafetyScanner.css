@@ -1,29 +1,39 @@
-.cyber-scan-section { margin: -18px 0 48px; }
+.cyber-scan-section { width: 100%; min-width: 0; margin: -18px 0 48px; }
 .cyber-scan-heading { display: flex; gap: 13px; align-items: flex-start; margin-bottom: 16px; }
+.cyber-scan-heading > div { min-width: 0; }
 .cyber-scan-heading-icon { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 13px; color: var(--secondary); background: rgba(20,184,166,.12); }
 [data-theme='dark'] .cyber-scan-heading-icon { color: var(--accent); background: rgba(66,208,186,.12); }
 .cyber-scan-heading h2 { margin-top: 3px; font: 700 24px/1.2 Outfit, Inter, sans-serif; letter-spacing: -.025em; }
 .cyber-scan-heading p { margin-top: 5px; color: var(--text-secondary); font-size: 12px; }
-.cyber-scan-card { overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-light); box-shadow: var(--shadow-sm); }
-.cyber-scan-tabs { display: flex; align-items: center; gap: 6px; padding: 11px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.cyber-scan-card { width: 100%; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-light); box-shadow: var(--shadow-sm); }
+.cyber-scan-tabs { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 6px; padding: 11px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
 .cyber-scan-tab { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid transparent; border-radius: 9px; color: var(--text-secondary); background: transparent; font-size: 11px; font-weight: 650; }
 .cyber-scan-tab.active { border-color: var(--border); color: var(--text-primary); background: var(--surface-light); box-shadow: var(--shadow-sm); }
 .cyber-scan-clear { margin-left: auto; padding: 7px 9px; color: var(--text-secondary); background: transparent; font-size: 11px; }
 .cyber-scan-clear:hover { color: var(--error); }
-.cyber-scan-input-area { padding: 17px; }
+.cyber-scan-input-area { min-width: 0; padding: 17px; }
 .cyber-scan-text-label { display: grid; gap: 7px; color: var(--text-primary); font-size: 11px; font-weight: 650; }
 .cyber-scan-text-label textarea { width: 100%; min-height: 118px; padding: 12px; border: 1px solid var(--border); border-radius: 11px; color: var(--text-primary); background: var(--surface-2); font: 12px/1.6 Inter, sans-serif; resize: vertical; }
 .cyber-scan-text-label textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.12); }
 .cyber-scan-text-label small { color: var(--text-secondary); font-size: 10px; font-weight: 400; }
-.cyber-scan-file-picker { min-height: 140px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 7px; padding: 20px; border: 1px dashed var(--border); border-radius: 13px; color: var(--text-secondary); background: var(--surface-2); text-align: center; cursor: pointer; }
+.cyber-scan-file-picker { width: 100%; min-width: 0; min-height: 140px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 7px; padding: 20px; border: 1px dashed var(--border); border-radius: 13px; color: var(--text-secondary); background: var(--surface-2); text-align: center; cursor: pointer; }
 .cyber-scan-file-picker:hover { border-color: var(--primary); background: rgba(var(--primary-rgb),.04); }
 .cyber-scan-file-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .cyber-scan-file-picker strong { max-width: 100%; overflow: hidden; color: var(--text-primary); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .cyber-scan-file-picker > span:last-child { font-size: 10px; }
 .cyber-file-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: var(--primary); background: rgba(var(--primary-rgb),.1); }
+.cyber-screenshot-upload { display: grid; min-width: 0; gap: 9px; }
+.cyber-selected-file { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.cyber-selected-file-icon { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border-radius: 9px; color: var(--primary); background: rgba(var(--primary-rgb),.1); }
+.cyber-selected-file-copy { display: grid; min-width: 0; flex: 1; gap: 3px; }
+.cyber-selected-file-copy strong { overflow: hidden; color: var(--text-primary); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.cyber-selected-file-copy small { color: var(--text-secondary); font-size: 9px; line-height: 1.4; }
+.cyber-remove-file { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); background: var(--surface-light); }
+.cyber-remove-file:hover { border-color: var(--error); color: var(--error); }
 .cyber-scan-audio-picker { display: grid; gap: 10px; }
-.cyber-consent-row { display: flex; align-items: flex-start; gap: 8px; padding: 11px; border: 1px solid var(--border); border-radius: 10px; color: var(--text-secondary); font-size: 10px; line-height: 1.5; }
-.cyber-consent-row input, .cyber-money-lost input { accent-color: var(--primary); margin-top: 2px; }
+.cyber-consent-row { display: flex; width: 100%; min-width: 0; align-items: flex-start; gap: 8px; padding: 11px; border: 1px solid var(--border); border-radius: 10px; color: var(--text-secondary); font-size: 10px; line-height: 1.5; }
+.cyber-consent-row > span { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.cyber-consent-row input, .cyber-money-lost input { flex: 0 0 auto; accent-color: var(--primary); margin-top: 2px; }
 .cyber-money-lost { display: flex; align-items: flex-start; gap: 9px; width: fit-content; margin-top: 13px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); cursor: pointer; }
 .cyber-money-lost span { display: grid; gap: 2px; }
 .cyber-money-lost strong { color: var(--text-primary); font-size: 11px; }
@@ -36,11 +46,11 @@
 .cyber-installed-check strong { color: var(--text-primary); }
 .cyber-installed-check p { margin-top: 4px; }
 .cyber-installed-check a { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; color: var(--primary); font-weight: 700; }
-.cyber-scan-actions { display: flex; align-items: center; gap: 12px; margin-top: 15px; }
+.cyber-scan-actions { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 15px; }
 .cyber-scan-submit { min-height: 41px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 15px; border-radius: 10px; color: var(--on-primary); background: var(--primary); font-size: 11px; font-weight: 700; }
 .cyber-scan-submit:hover:not(:disabled) { background: var(--primary-h); transform: translateY(-1px); }
 .cyber-scan-submit:disabled { cursor: wait; opacity: .75; }
-.cyber-scan-actions > span { color: var(--text-secondary); font-size: 10px; }
+.cyber-scan-actions > span { min-width: 0; color: var(--text-secondary); font-size: 10px; overflow-wrap: anywhere; }
 .cyber-spin { animation: cyber-spin 1s linear infinite; }
 @keyframes cyber-spin { to { transform: rotate(360deg); } }
 .cyber-scan-error { display: flex; align-items: center; gap: 8px; margin: 0 17px 16px; padding: 10px 12px; border-radius: 9px; color: #a82e2e; background: #fff0ee; font-size: 11px; }
@@ -80,7 +90,7 @@
 .cyber-transcript summary { cursor: pointer; }
 .cyber-transcript pre { max-height: 120px; overflow: auto; margin-top: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-light); color: var(--text-primary); font: 10px/1.5 Inter, sans-serif; white-space: pre-wrap; }
 .cyber-result-note { margin-top: 10px; color: var(--text-secondary); font-size: 9px; line-height: 1.5; }
-.cyber-data-note { padding: 0 17px 14px; color: var(--text-secondary); font-size: 9px; line-height: 1.55; }
+.cyber-data-note { width: 100%; max-width: 100%; padding: 0 17px 14px; color: var(--text-secondary); font-size: 9px; line-height: 1.55; overflow-wrap: anywhere; }
 
 @media (max-width: 700px) {
   .cyber-scan-section { margin: 0 0 34px; }
