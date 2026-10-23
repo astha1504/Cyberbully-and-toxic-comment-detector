@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Pehra | Comment Safety",
+  "short_name": "Pehra",
+  "version": "1.0.0",
+  "description": "Pehra checks comments for potentially harmful language on Instagram.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Pehra comment safety",
+    "default_popup": "popup.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.instagram.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

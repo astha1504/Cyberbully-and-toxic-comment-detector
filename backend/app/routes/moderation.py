@@ -117,7 +117,7 @@ async def rewrite_text(request: RewriteRequest, current_user: dict = Depends(get
         "max_completion_tokens": 512,
     }
     if settings.GROQ_REWRITE_MODEL.startswith("openai/gpt-oss-"):
-        payload.update({"reasoning_effort": "low", "reasoning_format": "hidden"})
+        payload.update({"reasoning_effort": "low", "include_reasoning": False})
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -160,6 +160,11 @@ async def rewrite_text(request: RewriteRequest, current_user: dict = Depends(get
             raise HTTPException(
                 status_code=502,
                 detail="The configured rewrite model was not found. Check GROQ_REWRITE_MODEL in backend/.env and restart the backend.",
+            )
+        if resp.status_code == 400:
+            raise HTTPException(
+                status_code=502,
+                detail="The rewrite service rejected the model request settings. Check the selected Groq model and its supported options.",
             )
         raise HTTPException(
             status_code=502,

@@ -73,6 +73,7 @@ export const markAllNotifsRead   = ()    => API.patch('/notifications/read-all')
 // ── Chat ──────────────────────────────────────────────────────────────────────
 export const getConversations   = ()           => API.get('/chat/conversations');
 export const getMessages        = (convId)     => API.get(`/chat/messages/${convId}`);
+export const markConversationRead = (convId)   => API.patch(`/chat/messages/${convId}/read`);
 export const createConversation = (userId)     => API.post('/chat/conversation', { user_id: userId });
 
 // ── Analytics ─────────────────────────────────────────────────────────────────

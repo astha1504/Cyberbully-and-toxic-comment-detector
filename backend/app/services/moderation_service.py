@@ -164,14 +164,15 @@ TOXIC_KEYWORDS = [
     'chutiya', 'chuteya', 'chutia', 'bhenchod', 'behenchod', 'madarchod',
     'motherfucker', 'bastard', 'lund', 'gand', 'kutta', 'kaminey', 'harami',
     'randi', 'mullo', 'katua', 'saala', 'mc', 'bc', 'bkl', 'stupid', 'idiot',
-    'hate', 'kill', 'worthless', 'useless', 'go away', 'nobody likes you'
+    'asshole', 'assholes', 'hate', 'kill', 'worthless', 'useless', 'go away',
+    'nobody likes you'
 ]
 
 _INSULT_TERMS = (
     "chutiya", "chuteya", "chutia", "bhenchod", "behenchod", "madarchod",
     "motherfucker", "bastard", "lund", "gand", "kutta", "kaminey", "harami",
     "randi", "mullo", "katua", "saala", "mc", "bc", "bkl", "stupid", "idiot",
-    "worthless", "useless",
+    "asshole", "assholes", "worthless", "useless",
 )
 _HARASSMENT_PHRASES = (
     "go away", "nobody likes you", "shut up", "fuck off", "leave me alone",

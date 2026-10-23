@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#183e3a">
+  <title>Pehra | Comment safety</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <img class="brand-logo" src="pehra-logo.png" alt="Pehra">
+      <div class="brand-copy">
+        <p>Safety, kept in sight</p>
+      </div>
+      <span class="header-tag">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.2c0 4.7 3.2 7.8 7.5 9.8 4.3-2 7.5-5.1 7.5-9.8V6L12 3Z"/><path d="m9 12 2 2 4-4"/></svg>
+        QUICK CHECK
+      </span>
+    </header>
+
+    <section class="panel">
+      <div class="panel-intro">
+        <p class="eyebrow">PAUSE BEFORE YOU SHARE</p>
+        <h2>Review a message</h2>
+        <p>Check a comment or message for language that could hurt someone.</p>
+      </div>
+      <label for="comment">Message or comment</label>
+      <textarea
+        id="comment"
+        rows="4"
+        maxlength="5000"
+        placeholder="Paste text for a safety check..."
+      ></textarea>
+
+      <button id="checkBtn" class="primary">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.2c0 4.7 3.2 7.8 7.5 9.8 4.3-2 7.5-5.1 7.5-9.8V6L12 3Z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span>Check message</span>
+      </button>
+
+      <p id="status" role="status"></p>
+      <section id="result" aria-live="polite"></section>
+    </section>
+
+    <details class="settings" id="settings">
+      <summary>
+        <span class="settings-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3m5 0h8"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+        </span>
+        <span class="settings-title">Connection settings<small>Backend and sign-in</small></span>
+        <span class="settings-chevron" aria-hidden="true"></span>
+      </summary>
+
+      <label for="apiBaseUrl">Pehra API address</label>
+      <input
+        id="apiBaseUrl"
+        type="url"
+        value="http://localhost:8000"
+        autocomplete="url"
+      >
+
+      <label for="token">Pehra access token</label>
+      <input
+        id="token"
+        type="password"
+        placeholder="Paste your JWT access token"
+        autocomplete="off"
+      >
+
+      <button id="saveBtn" class="secondary">
+        Save settings
+      </button>
+
+      <p class="hint">
+        The token stays in this Edge profile and is sent with checks. Keep it private.
+      </p>
+    </details>
+
+    <footer>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>
+      <span>Text is sent to your configured API for analysis.</span>
+    </footer>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

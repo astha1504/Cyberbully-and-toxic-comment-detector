@@ -13,6 +13,7 @@ import {
   getSafetyReportHistory, uploadSafetyEvidence,
 } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
+import { formatIndiaDate, formatIndiaDateTime } from '../utils/dateTime';
 import CyberSafetyScanner from '../components/CyberSafetyScanner';
 import './SafetyCenter.css';
 
@@ -466,7 +467,7 @@ const SafetyCenter = () => {
                 <div className="safety-case-main">
                   <span className="case-reference">{item.case_id}</span>
                   <strong>{item.category}</strong>
-                  <small>Submitted {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'recently'}</small>
+                  <small>Submitted {item.created_at ? formatIndiaDate(item.created_at) : 'recently'}</small>
                 </div>
                 <span className={`case-status status-${item.status}`}>{item.status.replaceAll('_', ' ')}</span>
                 <button type="button" className="case-details-toggle" onClick={() => toggleCaseDetails(item)}>
@@ -481,7 +482,7 @@ const SafetyCenter = () => {
                           {caseHistory[item.id].map((event, index) => (
                             <li key={`${item.id}-history-${index}`}>
                               <strong>{event.action.replaceAll('_', ' ')} · {event.actor_role === 'moderator' ? 'Safety team' : 'You'}</strong>
-                              <small>{event.created_at ? new Date(event.created_at).toLocaleString() : ''}</small>
+                              <small>{event.created_at ? formatIndiaDateTime(event.created_at) : ''}</small>
                               {event.note && <p>{event.note}</p>}
                             </li>
                           ))}

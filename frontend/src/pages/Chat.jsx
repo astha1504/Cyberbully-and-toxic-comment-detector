@@ -4,16 +4,16 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { useTheme } from '../context/ThemeContext';
 import {
-  getConversations, getMessages, createConversation, getUserProfile, searchUsers
+  getConversations, getMessages, markConversationRead, createConversation, getUserProfile, searchUsers
 } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
+import { formatIndiaTime } from '../utils/dateTime';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Send, ArrowLeft, Moon, Sun, MoreVertical, Phone, Video, Smile, AlertTriangle, Mic, MessageCircle
 } from 'lucide-react';
 import { checkAudioToxicity } from '../services/api';
 import toast from 'react-hot-toast';
-import AIInterventionModal from '../components/AIInterventionModal';
 import LiveToxicityHint from '../components/LiveToxicityHint';
 import './Chat.css';
 
@@ -38,8 +38,6 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [toxicityWarning, setToxicityWarning] = useState(null);
-  const [showIntervention, setShowIntervention] = useState(false);
-  const [interventionText, setInterventionText] = useState('');
   const [revealedMessages, setRevealedMessages] = useState({});
   const [checkingAudio, setCheckingAudio] = useState(false);
   const messagesEndRef = useRef(null);
@@ -132,10 +130,27 @@ const Chat = () => {
       setActiveConv(draftConversation);
     }
 
+    const activeConversationId = draftConversation?.id || currentConversation?.id;
+    if (matchesActiveConversation && message.sender_id !== user?.id && activeConversationId) {
+      setConversations((prev) => prev.map((conv) => conv.id === activeConversationId
+        ? { ...conv, unread_count: 0 }
+        : conv));
+      markConversationRead(activeConversationId).catch((error) => {
+        console.error('Could not mark active conversation as read:', error);
+      });
+    }
+
     const alreadyListed = conversationsRef.current.some((conv) => conv.id === message.conversation_id);
     if (message.sender_id !== user?.id && !alreadyListed) {
       getConversations()
-        .then(({ data }) => setConversations(Array.isArray(data) ? data : []))
+        .then(({ data }) => {
+          const refreshedConversations = Array.isArray(data) ? data : [];
+          setConversations(matchesActiveConversation
+            ? refreshedConversations.map((conv) => conv.id === message.conversation_id
+              ? { ...conv, unread_count: 0 }
+              : conv)
+            : refreshedConversations);
+        })
         .catch((error) => toast.error(getApiErrorMessage(error, 'Could not refresh conversations.')));
     }
     setConversations((prev) => {
@@ -147,6 +162,9 @@ const Chat = () => {
         isDraft: false,
         last_message: message.content,
         last_message_time: message.created_at,
+        unread_count: message.sender_id !== user?.id && !matchesActiveConversation
+          ? (current.unread_count || 0) + 1
+          : current.unread_count || 0,
       };
       return [updated, ...prev.filter((conv) => conv.id !== message.conversation_id)];
     });
@@ -194,6 +212,9 @@ const Chat = () => {
     try {
       const { data } = await getMessages(conv.id);
       setMessages(data);
+      setConversations((prev) => prev.map((item) => item.id === conv.id
+        ? { ...item, unread_count: 0 }
+        : item));
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Could not load messages.'));
     }
@@ -355,8 +376,9 @@ const Chat = () => {
         toast.error('No speech was detected in that recording');
         return;
       }
-      setInterventionText(data.transcription.trim());
-      setShowIntervention(true);
+      setToxicityWarning(null);
+      setNewMessage(data.transcription.trim());
+      toast.success('Transcript added to the message field. Review the transcript before sending.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Could not check this voice note.'));
     } finally {
@@ -402,9 +424,7 @@ const Chat = () => {
   const startConversation = openConversationWith;
 
   const formatTime = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    return formatIndiaTime(dateStr);
   };
 
 const filteredConversations = conversations.filter((conv) =>
@@ -628,18 +648,6 @@ const filteredConversations = conversations.filter((conv) =>
           </div>
         )}
 
-        <AIInterventionModal
-          isOpen={showIntervention}
-          onClose={() => setShowIntervention(false)}
-          onConfirm={(approvedText, decision) => sendMessage(null, approvedText, decision?.warningAccepted)}
-          onEdit={(text) => {
-            setNewMessage(text);
-            setShowIntervention(false);
-          }}
-          text={interventionText}
-          title="Send Message"
-          placeholder="Type a message..."
-        />
       </div>
     </div>
   );

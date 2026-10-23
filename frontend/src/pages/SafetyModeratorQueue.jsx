@@ -6,6 +6,7 @@ import {
   getSafetyReportQueue, reviewSafetyReport,
 } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
+import { formatIndiaDateTime } from '../utils/dateTime';
 import './SafetyModeratorQueue.css';
 
 const SafetyModeratorQueue = () => {
@@ -111,13 +112,13 @@ const SafetyModeratorQueue = () => {
         <div className="moderator-case-list">
           {reports.map((report) => (
             <article className="moderator-case-card" key={report.id}>
-              <header><div><span className="moderator-case-id">{report.case_id}</span><span className={`case-status status-${report.status}`}>{report.status.replaceAll('_', ' ')}</span></div><small>Submitted by {report.reporter_username} · {new Date(report.created_at).toLocaleString()}</small></header>
+              <header><div><span className="moderator-case-id">{report.case_id}</span><span className={`case-status status-${report.status}`}>{report.status.replaceAll('_', ' ')}</span></div><small>Submitted by {report.reporter_username} · {formatIndiaDateTime(report.created_at)}</small></header>
               <h2>{report.category}</h2>
               {(report.incident_date || report.state_or_ut) && <p className="moderator-case-context">{report.incident_date || 'Date not provided'}{report.state_or_ut ? ` · ${report.state_or_ut}` : ''}</p>}
               <p className="moderator-case-summary">{report.summary}</p>
               {report.events?.length > 0 && (
                 <details className="moderator-history"><summary>Case history ({report.events.length})</summary>
-                  {report.events.map((event, index) => <p key={`${report.id}-event-${index}`}>{event.action.replaceAll('_', ' ')} · {event.actor_role === 'reporter' ? 'Reporter' : 'Moderator'}{event.note ? `: ${event.note}` : ''}{event.created_at ? ` · ${new Date(event.created_at).toLocaleString()}` : ''}</p>)}
+                  {report.events.map((event, index) => <p key={`${report.id}-event-${index}`}>{event.action.replaceAll('_', ' ')} · {event.actor_role === 'reporter' ? 'Reporter' : 'Moderator'}{event.note ? `: ${event.note}` : ''}{event.created_at ? ` · ${formatIndiaDateTime(event.created_at)}` : ''}</p>)}
                 </details>
               )}
               <div className="moderator-evidence">

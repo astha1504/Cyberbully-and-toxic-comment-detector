@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUserBehaviour } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
+import { formatIndiaDateTime, parseApiTimestamp } from '../utils/dateTime';
 import { motion } from 'framer-motion';
 import {
   UserX, Shield, AlertTriangle, Edit3, Clock,
@@ -9,14 +10,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './UserBehaviour.css';
-
-const parseUtcTimestamp = (value) => {
-  if (!value) return null;
-  const timestamp = typeof value === 'string' ? value : String(value);
-  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(timestamp);
-  const parsed = new Date(hasTimezone ? timestamp : `${timestamp}Z`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
 
 const UserBehaviour = () => {
   const { user } = useAuth();
@@ -69,17 +62,9 @@ const UserBehaviour = () => {
   const totalEstimated = (safeComments + (behaviour?.toxic_comments || 0) + (behaviour?.edited_comments || 0)) || 1;
   const safeRate = Math.round((safeComments / totalEstimated) * 100);
 
-  const muteUntil = parseUtcTimestamp(behaviour?.mute_until);
+  const muteUntil = parseApiTimestamp(behaviour?.mute_until);
   const isMuted = muteUntil && muteUntil > new Date();
-  const muteUntilText = muteUntil?.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short',
-  });
+  const muteUntilText = muteUntil && formatIndiaDateTime(behaviour?.mute_until);
 
   const statCards = [
     { label: 'Warnings', value: behaviour?.warning_count || 0, icon: AlertTriangle, color: '#f59e0b' },

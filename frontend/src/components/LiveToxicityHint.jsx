@@ -4,7 +4,7 @@ import { checkToxicity } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
 import './LiveToxicityHint.css';
 
-const LiveToxicityHint = ({ text = '' }) => {
+const LiveToxicityHint = ({ text = '', children }) => {
   const [result, setResult] = useState(null);
   const [checking, setChecking] = useState(false);
   const [unavailable, setUnavailable] = useState('');
@@ -51,16 +51,18 @@ const LiveToxicityHint = ({ text = '' }) => {
   return (
     <div className={`live-toxicity-hint ${result?.isToxic ? 'is-flagged' : ''}`} role="status" aria-live="polite">
       {checking ? (
-        <><span className="live-hint-spinner" /> Checking wording…</>
+        <><span className="live-hint-spinner" aria-hidden="true" /><span>Checking wording…</span></>
       ) : unavailable ? (
-        <>{unavailable}</>
+        <span className="live-hint-message">{unavailable}</span>
       ) : (
         <>
-          <AlertTriangle size={15} />
-          <span>This wording may hurt others ({Math.round((result.score || 0) * 100)}% overall score).</span>
+          <AlertTriangle size={15} aria-hidden="true" />
+          <span className="live-hint-message">This wording may hurt others.</span>
+          <span className="live-hint-score">{Math.round((result.score || 0) * 100)}% overall score</span>
           {result.highlightedWords?.length > 0 && (
             <span className="live-hint-words">Matched: {result.highlightedWords.join(', ')}</span>
           )}
+          {children}
         </>
       )}
     </div>

@@ -181,7 +181,6 @@ const CreatePost = () => {
           isOpen={showIntervention}
           onClose={() => setShowIntervention(false)}
           onConfirm={submitPost}
-          onEdit={setCaption}
           text={pendingCaption}
           images={images}
           title="Create Post"

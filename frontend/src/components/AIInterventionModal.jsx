@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X, Send, Edit3 } from 'lucide-react';
+import { AlertTriangle, X, Send, Sparkles } from 'lucide-react';
 import { checkToxicity, checkImageToxicity, rewriteText } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
 import RewriteSuggestion from './RewriteSuggestion';
@@ -19,7 +19,7 @@ const renderMatchedText = (text, words = []) => {
   ));
 };
 
-const AIInterventionModal = ({ isOpen, onClose, onConfirm, onEdit, text = '', images = EMPTY_IMAGES, title = 'Create Post', placeholder = "What's on your mind?" }) => {
+const AIInterventionModal = ({ isOpen, onClose, onConfirm, text = '', images = EMPTY_IMAGES, title = 'Create Post', placeholder = "What's on your mind?" }) => {
   const [inputText, setInputText] = useState(text);
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState(null);
@@ -169,11 +169,6 @@ const AIInterventionModal = ({ isOpen, onClose, onConfirm, onEdit, text = '', im
     onClose?.();
   };
 
-  const handleEdit = () => {
-    onEdit?.(inputText);
-    onClose?.();
-  };
-
   const handleAcceptRewrite = () => {
     if (rewrite) {
       setInputText(rewrite);
@@ -279,15 +274,16 @@ const AIInterventionModal = ({ isOpen, onClose, onConfirm, onEdit, text = '', im
                   >
                     <AlertTriangle size={20} className="warning-icon" />
                     <div className="warning-content">
-                      <p className="warning-title">This content may hurt others</p>
-                      <div className="warning-details">
-                        <span className="severity-badge" style={{ background: getSeverityColor(overallSeverity) }}>
-                          {overallSeverity} Severity
-                        </span>
-                        <span className="score-text">Overall toxicity score: {(overallScore * 100).toFixed(0)}%</span>
+                      <div className="warning-heading">
+                        <p className="warning-title">This content may hurt others</p>
+                        <div className="warning-details">
+                          <span className="severity-badge" style={{ background: getSeverityColor(overallSeverity) }}>
+                            {overallSeverity} Severity
+                          </span>
+                          <span className="score-text">Overall toxicity score: {(overallScore * 100).toFixed(0)}%</span>
+                        </div>
                       </div>
                       <div className="category-signals">
-                        <span className="hw-label">Rule-based category signals, not model probabilities:</span>
                         {['insult', 'harassment', 'threat'].map((category) => (
                           <span key={category} className="category-signal">
                             <span>{category[0].toUpperCase() + category.slice(1)}</span>
@@ -297,41 +293,28 @@ const AIInterventionModal = ({ isOpen, onClose, onConfirm, onEdit, text = '', im
                       </div>
                       {highlightedWords.length > 0 && (
                         <div className="highlighted-words">
-                          <span className="hw-label">Matched wording:</span>
+                          <span className="hw-label">Matched:</span>
                           {highlightedWords.map((w, i) => (
                             <span key={i} className="hw-tag">{w}</span>
                           ))}
                         </div>
                       )}
-                      {result?.highlightedWords?.length > 0 && (
-                        <div className="matched-text-preview">
-                          <span>Matched wording in your message</span>
-                          <p>{renderMatchedText(inputText, result.highlightedWords)}</p>
-                        </div>
-                      )}
-                      {mediaResults.filter((media) => media.detectedText).map((media) => (
-                        <div className="ocr-result" key={media.index}>
-                          <span>Text detected in image {media.index + 1}</span>
-                          <p>{renderMatchedText(media.detectedText, media.highlightedWords)}</p>
-                        </div>
-                      ))}
-                      {mediaResults.filter((media) => media.error).map((media) => (
-                        <div className="ocr-unavailable" key={`ocr-error-${media.index}`}>
-                          OCR could not check image {media.index + 1}: {media.error}
-                        </div>
-                      ))}
-                      {rewriteError && (
-                        <div className="rewrite-error" role="alert">{rewriteError}</div>
-                      )}
-                      {!rewrite && !loadingRewrite && (
-                        <button className="rewrite-trigger" onClick={() => fetchRewrite(inputText)}>
-                          {rewriteError ? 'Try again' : 'Suggest a kinder rewrite'}
-                        </button>
-                      )}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {showWarning && rewriteError && (
+                <div className="rewrite-error" role="alert">{rewriteError}</div>
+              )}
+              {showWarning && !rewrite && !loadingRewrite && (
+                <div className="rewrite-actions">
+                  <button className="rewrite-trigger" onClick={() => fetchRewrite(inputText)}>
+                    <Sparkles size={15} aria-hidden="true" />
+                    <span>{rewriteError ? 'Try again' : 'Suggest a kinder rewrite'}</span>
+                  </button>
+                </div>
+              )}
 
               {loadingRewrite && (
                 <div className="modal-checking">
@@ -348,6 +331,18 @@ const AIInterventionModal = ({ isOpen, onClose, onConfirm, onEdit, text = '', im
                   onDismiss={() => setRewrite(null)}
                 />
               )}
+
+              {showWarning && mediaResults.filter((media) => media.detectedText).map((media) => (
+                <div className="ocr-result" key={media.index}>
+                  <span>Text detected in image {media.index + 1}</span>
+                  <p>{renderMatchedText(media.detectedText, media.highlightedWords)}</p>
+                </div>
+              ))}
+              {mediaResults.filter((media) => media.error).map((media) => (
+                <div className="ocr-unavailable" key={`ocr-error-${media.index}`}>
+                  OCR could not check image {media.index + 1}: {media.error}
+                </div>
+              ))}
             </div>
 
             <div className="modal-footer">
@@ -355,15 +350,9 @@ const AIInterventionModal = ({ isOpen, onClose, onConfirm, onEdit, text = '', im
                 Cancel
               </button>
               {showWarning ? (
-                <>
-                  <button className="btn btn-edit" onClick={handleEdit}>
-                    <Edit3 size={16} />
-                    Edit {contentType}
-                  </button>
-                  <button className="btn btn-post-anyway" onClick={handlePostAnyway} disabled={checking || checkingMedia}>
-                    {submitAnywayLabel}
-                  </button>
-                </>
+                <button className="btn btn-post-anyway" onClick={handlePostAnyway} disabled={checking || checkingMedia}>
+                  {submitAnywayLabel}
+                </button>
               ) : (
                 <button className="btn btn-primary" onClick={handlePostAnyway} disabled={checking || checkingMedia || (!inputText.trim() && !images.length)}>
                   <Send size={16} />

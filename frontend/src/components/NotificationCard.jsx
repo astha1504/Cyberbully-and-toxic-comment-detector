@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, MessageCircle, UserPlus, Bell, AlertTriangle } from 'lucide-react';
 import { markNotifRead } from '../services/api';
 import { getApiErrorMessage } from '../utils/errorMessages';
+import { formatRelativeTime } from '../utils/dateTime';
 import toast from 'react-hot-toast';
 import './NotificationCard.css';
 
@@ -16,19 +17,6 @@ const iconMap = {
 
 const NotificationCard = ({ notif, onRead }) => {
   const { Icon, color } = iconMap[notif.type] || iconMap.default;
-
-  const formatTime = (dateStr) => {
-    if (!dateStr) return '';
-    const ms = Date.now() - new Date(dateStr).getTime();
-    const m  = Math.floor(ms / 60000);
-    const h  = Math.floor(ms / 3600000);
-    const d  = Math.floor(ms / 86400000);
-    if (m  < 1)  return 'Just now';
-    if (m  < 60) return `${m}m ago`;
-    if (h  < 24) return `${h}h ago`;
-    if (d  < 7)  return `${d}d ago`;
-    return new Date(dateStr).toLocaleDateString();
-  };
 
   const handleClick = async () => {
     if (!notif.is_read) {
@@ -81,7 +69,7 @@ const NotificationCard = ({ notif, onRead }) => {
             </Link>{' '}
             {notif.message || notif.content}
           </p>
-          <span className="notif-time">{formatTime(notif.created_at)}</span>
+          <span className="notif-time">{formatRelativeTime(notif.created_at)}</span>
         </div>
       </div>
     </motion.div>

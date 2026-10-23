@@ -14,9 +14,17 @@ class PostUpdate(BaseModel):
     caption: Optional[str] = None
     images: Optional[List[str]] = Field(default=None, max_length=5)
 
+class PostAuthorResponse(BaseModel):
+    id: str
+    username: Optional[str] = None
+    name: Optional[str] = None
+    profile_picture: Optional[str] = None
+
 class PostResponse(PostBase):
     id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")
     user_id: PyObjectId
+    user: Optional[PostAuthorResponse] = None
+    comments_count: int = 0
     images: Optional[List[str]] = []
     created_at: datetime
     moderation_status: str = "safe"
@@ -45,6 +53,8 @@ class CommentUpdate(BaseModel):
 class CommentResponse(CommentBase):
     id: PyObjectId = Field(default_factory=lambda: str(ObjectId()), alias="_id", serialization_alias="id")
     user_id: PyObjectId
+    user_name: Optional[str] = None
+    user_profile_picture: Optional[str] = None
     moderation_status: str = "safe"
     toxicity_score: Optional[float] = None
     is_blurred: bool = False

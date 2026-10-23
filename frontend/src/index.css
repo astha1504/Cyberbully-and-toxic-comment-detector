@@ -84,7 +84,7 @@ body {
   color: var(--text);
   background: var(--bg);
   font-family: 'DM Sans', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   transition: color var(--transition-slow), background-color var(--transition-slow);
@@ -107,6 +107,39 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; color: var(--text); }
   width: min(100%, var(--app-page-max-width));
   margin-inline: auto;
   padding: var(--app-page-top-space) var(--app-page-gutter) var(--app-page-bottom-space);
+}
+
+/* Raise long-form page copy while leaving headings and control labels intact. */
+.main-content p,
+.main-content li,
+.main-content pre,
+.main-content .post-caption,
+.main-content .comment-content,
+.main-content .comment-text,
+.main-content .conv-preview,
+.main-content .message-bubble,
+.main-content .result-bio,
+.main-content .profile-bio,
+.main-content .moderator-case-summary,
+.main-content .report-privacy,
+.main-content .report-steps,
+.main-content .cyber-consent-row,
+.main-content .cyber-no-match,
+.main-content .cyber-transcript,
+.main-content .case-evidence-panel > p,
+.main-content .case-history-panel li,
+.main-content .behaviour-tips,
+.main-content .analytics-table,
+.main-content .analytics-empty,
+.main-content .analytics-error,
+.chat-page p,
+.chat-page li,
+.chat-page .conv-preview,
+.chat-page .message-bubble,
+.chat-page .flagged-message-cover,
+.chat-page .chat-list-empty,
+.chat-page .empty-thread {
+  font-size: clamp(13px, 1em, 15px) !important;
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }

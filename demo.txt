@@ -34,7 +34,7 @@ The strongest story is the combination of safer posting and chat, explainable sc
 
 30-SECOND PITCH
 
-Pehra is a safety layer for student communities. Our Pehra Safety Loop helps people pause before harmful posts, understand suspicious messages across text, screenshots, and voice notes, then follow a relevant next step. People see the warning signs and reach an official service or request consent-based review by a community safety moderator. Pehra supports safer decisions. It does not decide guilt or file a police complaint.
+Pehra is a safety layer for student communities. Our Pehra Safety Loop helps people pause before harmful posts, understand suspicious messages across text, screenshots, and voice notes, then follow a relevant next step. The Pehra Edge extension also blurs flagged Instagram comments in the browser and lets readers choose to reveal them. People see the warning signs and reach an official service or request consent-based review by a community safety moderator. Pehra supports safer decisions. It does not decide guilt or file a police complaint.
 
 JUDGE QUESTIONS AND ANSWERS
 
@@ -317,6 +317,17 @@ COMMENTS AND NOTIFICATIONS
 2. Wait for the comment status and open Notifications.
 3. Confirm a moderation alert appears. Confirm the comment text is blurred.
 4. Open Analytics and select Refresh after the moderation task finishes.
+
+INSTAGRAM EDGE EXTENSION
+The extension has been confirmed working on Instagram web in Edge. Recheck after changing extension files or the backend.
+1. Open edge://extensions. Confirm Pehra is enabled and loaded from the project's edge-extension folder. Select Reload after code changes.
+2. Open Pehra's Details page. Allow site access for https://www.instagram.com and the configured backend address, http://localhost:8000 or http://127.0.0.1:8000.
+3. Open the Pehra toolbar popup. Confirm the API URL and saved access token. Use Check message with "You are stupid". Confirm the result flags the wording and highlights "stupid".
+4. Open https://www.instagram.com in Edge and sign in to a private test account. Open comments on a private test post.
+5. If a test comment is needed, add "You are stupid" only to the private test post. Wait for Pehra to scan it. Remove the sample comment after the check.
+6. Confirm the flagged comment is blurred and a Pehra control appears. Select the control to reveal the comment, then select again to blur it.
+7. Confirm safe comments receive no blur or warning. The extension covers Instagram web comments only. It does not scan Instagram DMs, Stories, or the mobile app.
+8. If the popup check works but comments do not blur, confirm Instagram site access and refresh the page. Check the Edge extension service worker console for request errors.
 
 IMAGE OCR
 1. Upload the prepared image in Create.

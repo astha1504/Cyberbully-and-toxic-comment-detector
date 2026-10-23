@@ -58,7 +58,7 @@ const Login = () => {
           <div className="auth-story-footer"><span><i /> A calmer corner of the internet</span><span>PEHRA · INDIA FIRST</span></div>
         </div>
         <div className="auth-orbit auth-orbit-one" /><div className="auth-orbit auth-orbit-two" />
-        <div className="auth-hero-shield"><ShieldCheck size={68} strokeWidth={1.2} /></div>
+        <div className="auth-hero-shield"><img src="/pehra-mark.svg" alt="" /></div>
       </section>
 
       <section className="auth-panel">

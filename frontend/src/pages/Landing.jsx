@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import {
   ArrowDownRight, ArrowRight, ArrowUpRight, Check, Eye,
-  FileImage, HeartHandshake, MessageSquare, Mic, ShieldCheck,
-  Smartphone
+  EyeOff, FileImage, HeartHandshake, MessageSquare, Mic, Monitor,
+  ShieldCheck, Smartphone
 } from 'lucide-react';
 import BrandLockup from '../components/BrandLockup';
 import './Landing.css';
@@ -43,6 +43,7 @@ const Landing = () => (
       </Link>
       <nav className="landing-nav-links" aria-label="Page navigation">
         <a href="#pehra-loop">How Pehra works</a>
+        <a href="#browser-extension">Edge extension</a>
         <a href="#real-world-help">Get help</a>
       </nav>
       <div className="landing-nav-actions">
@@ -146,6 +147,46 @@ const Landing = () => (
           </article>
         </div>
           <p className="landing-capability-note">Image text reading and voice transcription depend on available services and language packs. Results guide review. They do not prove fraud.</p>
+      </section>
+
+      <section className="landing-extension-section" id="browser-extension" aria-labelledby="extension-title">
+        <div className="landing-extension-copy">
+          <span className="landing-kicker">Pehra in your browser</span>
+          <h2 id="extension-title">Bring a pause to Instagram comments.</h2>
+          <p>The Pehra Edge extension checks visible Instagram web comments with Pehra's moderation API. Flagged wording starts blurred. Readers choose when to reveal hidden text.</p>
+          <ul className="landing-extension-points">
+            <li><EyeOff size={16} /><span>Blur flagged comment text, then reveal it on request.</span></li>
+            <li><ShieldCheck size={16} /><span>Connect with your Pehra access token in extension settings.</span></li>
+            <li><Monitor size={16} /><span>Prototype scope: Instagram web comments in Microsoft Edge.</span></li>
+          </ul>
+          <p className="landing-extension-privacy">Comment text is sent to your configured Pehra API for analysis. The current prototype does not scan Instagram DMs, Stories, or the mobile app.</p>
+        </div>
+
+        <div className="landing-extension-visual">
+          <div className="landing-extension-preview" role="img" aria-label="Illustration of Pehra blurring a flagged Instagram comment">
+            <div className="landing-extension-preview-header">
+              <div className="landing-extension-brand">
+                <span><img src="/pehra-mark.svg" alt="" /></span>
+                <div><strong>Pehra</strong><small>Comment safety</small></div>
+              </div>
+              <span className="landing-extension-prototype">EDGE PROTOTYPE</span>
+            </div>
+            <div className="landing-extension-preview-body">
+              <div className="landing-extension-post-head">
+                <span className="landing-extension-post-icon"><MessageSquare size={17} /></span>
+                <div><strong>Instagram web</strong><small>Comment thread</small></div>
+                <span className="landing-extension-post-status">PEHRA CHECK</span>
+              </div>
+              <div className="landing-extension-comment-card">
+                <span className="landing-extension-flag">POTENTIALLY HARMFUL</span>
+                <div className="landing-extension-blurred-lines" aria-hidden="true"><i /><i /><i /></div>
+                <div className="landing-extension-hidden-label"><EyeOff size={15} /><span>Comment hidden by Pehra</span></div>
+                <span className="landing-extension-reveal-hint">Reveal only when you choose</span>
+              </div>
+            </div>
+            <div className="landing-extension-preview-note"><ShieldCheck size={14} /><span>Illustration only. No live Instagram scan.</span></div>
+          </div>
+        </div>
       </section>
 
       <section className="landing-help-section" id="real-world-help" aria-labelledby="help-title">

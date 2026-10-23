@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { likePost, deletePost, addComment, getComments, deleteComment, getPost, updatePost, updateComment, rewriteText } from '../../services/api';
 import { getApiErrorMessage } from '../../utils/errorMessages';
+import { formatRelativeTime } from '../../utils/dateTime';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Trash2, Send, MoreHorizontal, X, Edit3, Wand2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import AIInterventionModal from '../AIInterventionModal';
 import LiveToxicityHint from '../LiveToxicityHint';
 import './Post.css';
 
@@ -16,11 +17,12 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
   const { socket } = useSocket();
   const [liked, setLiked] = useState(post.is_liked || false);
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
+  const [commentsCount, setCommentsCount] = useState(Number(post.comments_count) || 0);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
-  const [pendingCommentText, setPendingCommentText] = useState('');
-  const [showCommentIntervention, setShowCommentIntervention] = useState(false);
+  const [commentDraftRewrite, setCommentDraftRewrite] = useState({ loading: false, suggestion: '', error: '' });
+  const commentDraftRewriteRequest = useRef(0);
   const [showMenu, setShowMenu] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
@@ -37,11 +39,10 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
   const [rewriteError, setRewriteError] = useState('');
 
   const [activeCommentRewriteId, setActiveCommentRewriteId] = useState(null);
-  const [commentRewriteSuggestion, setCommentRewriteSuggestion] = useState('');
-  const [commentRewriteLoading, setCommentRewriteLoading] = useState(false);
-  const [commentRewriteError, setCommentRewriteError] = useState('');
+  const [commentRewriteResults, setCommentRewriteResults] = useState({});
   const commentRewriteFetched = useRef(new Set());
   const [commentTooltipPos, setCommentTooltipPos] = useState({ x: 0, y: 0 });
+  const commentTooltipCloseTimer = useRef(null);
 
   const getAvatarUrl = (pic) => {
     if (pic && (pic.startsWith('http') || pic.startsWith('data:'))) return pic;
@@ -54,9 +55,20 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
   const postAuthorAvatar = getAvatarUrl(post.user?.profile_picture, postAuthorName);
   const currentUserId = user?.id;
   const isOwner = currentUserId && currentUserId === postAuthorId;
+  const isCommentAuthor = (comment) => String(comment.user_id || '') === String(currentUserId || '');
   const isFlagged = post.is_blurred || post.moderation_status === 'flagged';
   const isPending = post.moderation_status === 'pending';
   const isUnverified = post.moderation_status === 'unverified';
+
+  useEffect(() => {
+    setCommentsCount(Number(post.comments_count) || 0);
+  }, [post.comments_count]);
+
+  useEffect(() => () => {
+    if (commentTooltipCloseTimer.current) {
+      clearTimeout(commentTooltipCloseTimer.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isPending) return undefined;
@@ -168,7 +180,13 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
     setRewriteError(false);
     try {
       const { data } = await rewriteText(post.caption || post.content || '');
-      setRewriteSuggestion(data.suggestion || '');
+      if (typeof data?.suggestion !== 'string' || !data.suggestion.trim()) {
+        setRewriteSuggestion('');
+        setRewriteError('The rewrite service returned an empty suggestion. Please try again.');
+        rewriteFetched.current = false;
+        return;
+      }
+      setRewriteSuggestion(data.suggestion.trim());
     } catch (error) {
       setRewriteSuggestion('');
       setRewriteError(getApiErrorMessage(error, 'Rewrite suggestions are unavailable. Please edit manually.'));
@@ -213,34 +231,69 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
     setHoverRewrite(false);
   };
 
-  const fetchCommentRewriteSuggestion = async (commentId, text) => {
+  const fetchCommentRewriteSuggestion = async (commentId, text, retry = false) => {
     if (commentRewriteFetched.current.has(commentId)) return;
+    const cachedResult = commentRewriteResults[commentId];
+    if (!retry && cachedResult && (cachedResult.suggestion || cachedResult.error)) return;
+
     commentRewriteFetched.current.add(commentId);
-    setCommentRewriteLoading(true);
-    setCommentRewriteError(false);
+    setCommentRewriteResults((prev) => ({
+      ...prev,
+      [commentId]: { loading: true, suggestion: '', error: '' },
+    }));
     try {
       const { data } = await rewriteText(text || '');
-      setCommentRewriteSuggestion(data.suggestion || '');
+      if (typeof data?.suggestion !== 'string' || !data.suggestion.trim()) {
+        setCommentRewriteResults((prev) => ({
+          ...prev,
+          [commentId]: {
+            loading: false,
+            suggestion: '',
+            error: 'The rewrite service returned an empty suggestion. Please try again.',
+          },
+        }));
+        commentRewriteFetched.current.delete(commentId);
+        return;
+      }
+      setCommentRewriteResults((prev) => ({
+        ...prev,
+        [commentId]: { loading: false, suggestion: data.suggestion.trim(), error: '' },
+      }));
     } catch (error) {
-      setCommentRewriteSuggestion('');
-      setCommentRewriteError(getApiErrorMessage(error, 'Rewrite suggestions are unavailable. Please try again.'));
+      setCommentRewriteResults((prev) => ({
+        ...prev,
+        [commentId]: {
+          loading: false,
+          suggestion: '',
+          error: getApiErrorMessage(error, 'Rewrite suggestions are unavailable. Please try again.'),
+        },
+      }));
       commentRewriteFetched.current.delete(commentId);
     } finally {
-      setCommentRewriteLoading(false);
+      setCommentRewriteResults((prev) => ({
+        ...prev,
+        [commentId]: { ...prev[commentId], loading: false },
+      }));
     }
   };
 
   const applyCommentRewrite = async (commentId) => {
-    if (!commentRewriteSuggestion.trim() || !commentId) return;
+    const suggestion = commentRewriteResults[commentId]?.suggestion || '';
+    if (!suggestion.trim() || !commentId) return;
     try {
-      const response = await updateComment(commentId, { text: commentRewriteSuggestion });
+      const response = await updateComment(commentId, { text: suggestion });
       const data = response?.data;
       if (!data || typeof data !== 'object') {
         throw new Error('Invalid response from server');
       }
       toast.success('Comment updated!');
       setActiveCommentRewriteId(null);
-      setCommentRewriteSuggestion('');
+      commentRewriteFetched.current.delete(commentId);
+      setCommentRewriteResults((prev) => {
+        const next = { ...prev };
+        delete next[commentId];
+        return next;
+      });
       setComments((prev) =>
         prev.map((c) => (c.id === commentId ? { ...data, id: data.id || c.id } : c))
       );
@@ -251,15 +304,39 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
   };
 
   const handleCommentMouseEnter = (commentId, text, e) => {
-    setCommentTooltipPos({ x: e.clientX, y: e.clientY });
+    if (commentTooltipCloseTimer.current) {
+      clearTimeout(commentTooltipCloseTimer.current);
+    }
+    const commentRect = e.currentTarget.getBoundingClientRect();
+    const tooltipWidth = Math.min(340, window.innerWidth - 24);
+    const tooltipHeight = 240;
+    const left = Math.max(12, Math.min(commentRect.left, window.innerWidth - tooltipWidth - 12));
+    const below = commentRect.bottom + 8;
+    const top = below + tooltipHeight <= window.innerHeight
+      ? below
+      : Math.max(12, commentRect.top - tooltipHeight - 8);
+    setCommentTooltipPos({ x: left, y: top });
     setActiveCommentRewriteId(commentId);
-    setCommentRewriteSuggestion('');
-    setCommentRewriteError(false);
-    fetchCommentRewriteSuggestion(commentId, text);
+    if (!commentRewriteResults[commentId]) {
+      fetchCommentRewriteSuggestion(commentId, text);
+    }
   };
 
   const handleCommentMouseLeave = () => {
-    setActiveCommentRewriteId(null);
+    if (commentTooltipCloseTimer.current) {
+      clearTimeout(commentTooltipCloseTimer.current);
+    }
+    commentTooltipCloseTimer.current = setTimeout(() => {
+      setActiveCommentRewriteId(null);
+      commentTooltipCloseTimer.current = null;
+    }, 180);
+  };
+
+  const keepCommentRewriteOpen = () => {
+    if (commentTooltipCloseTimer.current) {
+      clearTimeout(commentTooltipCloseTimer.current);
+      commentTooltipCloseTimer.current = null;
+    }
   };
 
   const fetchComments = async () => {
@@ -300,15 +377,17 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    setPendingCommentText(commentText.trim());
-    setShowCommentIntervention(true);
+    await submitComment(commentText.trim());
   };
 
   const submitComment = async (approvedText) => {
     try {
       const { data } = await addComment(postId, { text: approvedText });
       setComments((prev) => [data, ...prev]);
+      setCommentsCount((count) => count + 1);
       setCommentText('');
+      commentDraftRewriteRequest.current += 1;
+      setCommentDraftRewrite({ loading: false, suggestion: '', error: '' });
     } catch (err) {
       const isToxic = err.response?.data?.is_toxic;
       if (isToxic) {
@@ -319,28 +398,57 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
     }
   };
 
+  const handleCommentDraftChange = (event) => {
+    commentDraftRewriteRequest.current += 1;
+    setCommentText(event.target.value);
+    setCommentDraftRewrite({ loading: false, suggestion: '', error: '' });
+  };
+
+  const fetchCommentDraftRewrite = async () => {
+    const sourceText = commentText.trim();
+    if (!sourceText || commentDraftRewrite.loading) return;
+
+    const requestId = ++commentDraftRewriteRequest.current;
+    setCommentDraftRewrite({ loading: true, suggestion: '', error: '' });
+    try {
+      const { data } = await rewriteText(sourceText);
+      if (requestId !== commentDraftRewriteRequest.current) return;
+      if (typeof data?.suggestion !== 'string' || !data.suggestion.trim()) {
+        setCommentDraftRewrite({
+          loading: false,
+          suggestion: '',
+          error: 'No rewrite was returned. Try again or edit your comment.',
+        });
+        return;
+      }
+      setCommentDraftRewrite({ loading: false, suggestion: data.suggestion.trim(), error: '' });
+    } catch (error) {
+      if (requestId === commentDraftRewriteRequest.current) {
+        setCommentDraftRewrite({
+          loading: false,
+          suggestion: '',
+          error: getApiErrorMessage(error, 'Rewrite suggestions are unavailable. Please edit your comment.'),
+        });
+      }
+    }
+  };
+
+  const applyCommentDraftRewrite = () => {
+    if (!commentDraftRewrite.suggestion) return;
+    commentDraftRewriteRequest.current += 1;
+    setCommentText(commentDraftRewrite.suggestion);
+    setCommentDraftRewrite({ loading: false, suggestion: '', error: '' });
+  };
+
   const handleDeleteComment = async (commentId) => {
     try {
       await deleteComment(commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setCommentsCount((count) => Math.max(0, count - 1));
       toast.success('Comment deleted');
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Could not delete this comment.'));
     }
-  };
-
-  const formatTime = (dateStr) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHrs = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHrs < 24) return `${diffHrs}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
   };
 
   return (
@@ -362,7 +470,7 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
           />
           <div>
             <span className="post-username">{postAuthorName}</span>
-            <span className="post-time">{formatTime(post.created_at)}</span>
+            <span className="post-time">{formatRelativeTime(post.created_at)}</span>
           </div>
         </Link>
         {isOwner && (
@@ -432,9 +540,12 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
         </div>
       </div>
 
-      {/* Likes */}
-      <div className="post-likes">
+      {/* Post counts */}
+      <div className="post-stats">
         <span>{likesCount} {likesCount === 1 ? 'like' : 'likes'}</span>
+        <button className="post-comments-count" onClick={toggleComments}>
+          {commentsCount} {commentsCount === 1 ? 'comment' : 'comments'}
+        </button>
       </div>
 
       {/* Caption */}
@@ -543,13 +654,6 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
         )}
       </div>
 
-      {/* Comments count */}
-      {post.comments_count > 0 && !showComments && (
-        <button className="view-comments-btn" onClick={toggleComments}>
-          View all {post.comments_count} comments
-        </button>
-      )}
-
       {/* Comments Section */}
       <AnimatePresence>
         {showComments && (
@@ -560,30 +664,68 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <form className="comment-form" onSubmit={handleAddComment}>
-              <input
-                type="text"
-                placeholder="Add a comment..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                className="comment-input"
-              />
-              <button
-                type="submit"
-                className="comment-submit"
-                disabled={!commentText.trim()}
-              >
-                <Send size={18} />
-              </button>
-            </form>
-            <LiveToxicityHint text={commentText} />
+            <div className="comment-composer">
+              <form className="comment-form" onSubmit={handleAddComment}>
+                <input
+                  type="text"
+                  placeholder="Add a comment..."
+                  value={commentText}
+                  onChange={handleCommentDraftChange}
+                  className="comment-input"
+                />
+                <button
+                  type="submit"
+                  className="comment-submit"
+                  disabled={!commentText.trim()}
+                  aria-label="Send comment"
+                >
+                  <Send size={17} />
+                </button>
+              </form>
+              <LiveToxicityHint text={commentText}>
+                <div className="comment-rewrite-inline">
+                  {commentDraftRewrite.suggestion ? (
+                    <>
+                      <div className="comment-rewrite-suggestion">
+                        <span className="comment-rewrite-label">Rewrite suggestion</span>
+                        <span>{commentDraftRewrite.suggestion}</span>
+                      </div>
+                      <button type="button" className="comment-rewrite-use" onClick={applyCommentDraftRewrite}>
+                        Use suggestion
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {commentDraftRewrite.error && (
+                        <span className="comment-rewrite-error">{commentDraftRewrite.error}</span>
+                      )}
+                      <button
+                        type="button"
+                        className="comment-rewrite-suggest"
+                        onClick={fetchCommentDraftRewrite}
+                        disabled={commentDraftRewrite.loading}
+                      >
+                        <Wand2 size={14} />
+                        {commentDraftRewrite.loading
+                          ? 'Generating suggestion...'
+                          : commentDraftRewrite.error
+                            ? 'Try rewrite again'
+                            : 'Suggest a kinder rewrite'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </LiveToxicityHint>
+            </div>
             <div className="comments-list">
               {loadingComments ? (
                 <div className="comments-loading">
                   <div className="spinner small"></div>
                 </div>
               ) : (
-                comments.map((comment) => (
+                comments.map((comment) => {
+                  const rewriteResult = commentRewriteResults[comment.id] || {};
+                  return (
                   <div key={comment.id} className="comment-item">
                     <img
                       src={getAvatarUrl(comment.user_profile_picture, comment.user_name)}
@@ -592,11 +734,16 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
                       onError={(e) => { e.target.src = '/placeholder-avatar.svg'; }}
                     />
                     <div className="comment-content">
-                      <span className="comment-username">{comment.user_name}</span>
+                      <div className="comment-meta">
+                        <span className="comment-username">{comment.user_name || 'Community member'}</span>
+                        <time className="comment-time" dateTime={comment.created_at}>
+                          {formatRelativeTime(comment.created_at)}
+                        </time>
+                      </div>
                       <div
                         className="caption-main"
                         onMouseEnter={(e) => {
-                          if (comment.moderation_status !== 'pending' && (comment.is_blurred || comment.is_toxic)) {
+                          if (isCommentAuthor(comment) && comment.moderation_status !== 'pending' && (comment.is_blurred || comment.is_toxic)) {
                             handleCommentMouseEnter(comment.id, comment.text, e);
                           }
                         }}
@@ -615,60 +762,61 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
                         {comment.moderation_status !== 'pending' && comment.moderation_status !== 'unverified' && (comment.is_blurred || comment.is_toxic) && (
                           <div className="moderation-badge">Flagged for toxicity</div>
                         )}
-                        <AnimatePresence>
-                          {activeCommentRewriteId === comment.id && (
-                            <motion.div
-                              className="rewrite-tooltip"
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 8 }}
-                              style={{ position: 'fixed', left: commentTooltipPos.x, top: commentTooltipPos.y + 10, zIndex: 9999 }}
-                            >
-                              <div className="rewrite-tooltip-header">
-                                <Wand2 size={14} />
-                                <span>AI Rewrite Suggestion</span>
+                        {isCommentAuthor(comment) && activeCommentRewriteId === comment.id && createPortal(
+                          <motion.div
+                            className="rewrite-tooltip comment-rewrite-tooltip"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            style={{ position: 'fixed', left: commentTooltipPos.x, top: commentTooltipPos.y, zIndex: 9999 }}
+                            onMouseEnter={keepCommentRewriteOpen}
+                            onMouseLeave={handleCommentMouseLeave}
+                          >
+                            <div className="rewrite-tooltip-header">
+                              <Wand2 size={14} />
+                              <span>AI Rewrite Suggestion</span>
+                            </div>
+                            {rewriteResult.loading ? (
+                              <div className="rewrite-tooltip-body">
+                                <div className="spinner small"></div>
+                                <span>Generating suggestion...</span>
                               </div>
-                              {commentRewriteLoading ? (
-                                <div className="rewrite-tooltip-body">
-                                  <div className="spinner small"></div>
-                                  <span>Generating suggestion...</span>
-                                </div>
-                              ) : commentRewriteError || !commentRewriteSuggestion ? (
-                                <div className="rewrite-tooltip-body">
-                                  <p className="rewrite-text" style={{ color: 'var(--text-secondary)' }}>
-                                    {commentRewriteError || 'Could not generate a rewrite suggestion.'}
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="rewrite-tooltip-body">
-                                  <p className="rewrite-text">{commentRewriteSuggestion}</p>
-                                </div>
-                              )}
-                              {!commentRewriteLoading && (commentRewriteSuggestion || commentRewriteError) && (
-                                <div className="rewrite-tooltip-actions">
-                                  {commentRewriteSuggestion ? (
-                                    <button
-                                      className="btn-apply-rewrite"
-                                      onClick={() => applyCommentRewrite(comment.id)}
-                                    >
-                                      Apply Suggestion
-                                    </button>
-                                  ) : (
-                                    <button
-                                      className="btn-edit-rewrite"
-                                      onClick={() => fetchCommentRewriteSuggestion(comment.id, comment.text)}
-                                    >
-                                      Try again
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                            ) : rewriteResult.error || !rewriteResult.suggestion ? (
+                              <div className="rewrite-tooltip-body">
+                                <p className="rewrite-text" style={{ color: 'var(--text-secondary)' }}>
+                                  {rewriteResult.error || 'Could not generate a rewrite suggestion.'}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="rewrite-tooltip-body">
+                                <p className="rewrite-text">{rewriteResult.suggestion}</p>
+                              </div>
+                            )}
+                            {!rewriteResult.loading && (rewriteResult.suggestion || rewriteResult.error) && (
+                              <div className="rewrite-tooltip-actions">
+                                {rewriteResult.suggestion ? (
+                                  <button
+                                    className="btn-apply-rewrite"
+                                    onClick={() => applyCommentRewrite(comment.id)}
+                                  >
+                                    Apply Suggestion
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="btn-edit-rewrite"
+                                    onClick={() => fetchCommentRewriteSuggestion(comment.id, comment.text, true)}
+                                  >
+                                    Try again
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </motion.div>,
+                          document.body,
+                          comment.id,
+                        )}
                       </div>
                     </div>
-                    {(comment.user_id === user?.id) && (
+                    {isCommentAuthor(comment) && (
                       <button
                         className="comment-delete"
                         onClick={() => handleDeleteComment(comment.id)}
@@ -677,21 +825,13 @@ const PostCard = ({ post, onDelete, onPostUpdated }) => {
                       </button>
                     )}
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-      <AIInterventionModal
-        isOpen={showCommentIntervention}
-        onClose={() => setShowCommentIntervention(false)}
-        onConfirm={submitComment}
-        onEdit={setCommentText}
-        text={pendingCommentText}
-        title="Add Comment"
-        placeholder="Write a thoughtful comment..."
-      />
     </motion.div>
   );
 };

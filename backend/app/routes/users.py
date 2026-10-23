@@ -78,6 +78,12 @@ async def get_user_profile(user_id: str, current_user: dict = Depends(get_curren
     posts = await posts_cursor.to_list(None)
     
     is_following = str(current_user["_id"]) in user.get("followers", [])
+    post_author = {
+        "id": str(user.get("_id")),
+        "username": user.get("username"),
+        "name": user.get("name"),
+        "profile_picture": user.get("profile_picture"),
+    }
     
     result = {
         "user": {
@@ -94,6 +100,7 @@ async def get_user_profile(user_id: str, current_user: dict = Depends(get_curren
             {
                 **_serialize_object_ids({k: v for k, v in post.items() if k != "_id"}),
                 "id": str(post.get("_id")),
+                "user": post_author,
             }
             for post in posts
         ],

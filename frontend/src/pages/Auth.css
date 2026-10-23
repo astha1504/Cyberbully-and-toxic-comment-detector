@@ -24,6 +24,7 @@
 .auth-orbit-one { top: 15%; right: -8%; width: 460px; height: 460px; }
 .auth-orbit-two { top: 23%; right: 2%; width: 310px; height: 310px; border-color: rgba(193, 223, 200, .08); }
 .auth-hero-shield { position: absolute; right: 7%; bottom: 13%; display: grid; width: 104px; height: 104px; place-items: center; border: 1px solid rgba(193, 223, 200, .2); border-radius: 30px; color: rgba(193, 223, 200, .72); background: linear-gradient(145deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .025)); box-shadow: 0 22px 55px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .14); transform: rotate(-9deg); }
+.auth-hero-shield img { width: 72px; height: 72px; border-radius: 20px; }
 
 .auth-panel { display: flex; min-width: 0; align-items: center; justify-content: center; padding: 42px var(--app-page-gutter); background: var(--bg); }
 .auth-container { width: 100%; max-width: 430px; }

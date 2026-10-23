@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status, 
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
-from ..database import posts_collection, notifications_collection
+from ..database import posts_collection, comments_collection, notifications_collection
 from ..models.social import PostCreate, PostUpdate, PostResponse
 from ..routes.auth import get_current_user
 from ..services.moderation_service import check_toxicity
@@ -12,6 +12,64 @@ from ..services.user_behaviour_service import is_muted, record_violation
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 MAX_POST_IMAGE_CHARS = 13 * 1024 * 1024
+POST_AUTHOR_FIELDS = {"username": 1, "name": 1, "profile_picture": 1}
+
+
+def _serialize_post(post: dict, author: dict | None = None, comments_count: int = 0) -> dict:
+    result = {key: value for key, value in post.items() if key != "_id"}
+    result["id"] = str(post.get("_id", post.get("id", "")))
+    result["comments_count"] = comments_count
+
+    if author:
+        result["user"] = {
+            "id": str(author.get("_id", post.get("user_id", ""))),
+            "username": author.get("username"),
+            "name": author.get("name"),
+            "profile_picture": author.get("profile_picture"),
+        }
+    else:
+        result["user"] = None
+
+    return result
+
+
+async def _serialize_posts(posts: list[dict]) -> list[dict]:
+    author_ids = {
+        str(post.get("user_id"))
+        for post in posts
+        if ObjectId.is_valid(str(post.get("user_id", "")))
+    }
+    authors_by_id = {}
+
+    if author_ids:
+        author_documents = await posts_collection.database["users"].find(
+            {"_id": {"$in": [ObjectId(author_id) for author_id in author_ids]}},
+            POST_AUTHOR_FIELDS,
+        ).to_list(length=len(author_ids))
+        authors_by_id = {str(author["_id"]): author for author in author_documents}
+
+    post_ids = {
+        str(post.get("_id", post.get("id", "")))
+        for post in posts
+        if post.get("_id", post.get("id")) is not None
+    }
+    comment_counts = {}
+
+    if post_ids:
+        count_documents = await comments_collection.aggregate([
+            {"$match": {"post_id": {"$in": list(post_ids)}}},
+            {"$group": {"_id": "$post_id", "count": {"$sum": 1}}},
+        ]).to_list(length=len(post_ids))
+        comment_counts = {str(item["_id"]): item["count"] for item in count_documents}
+
+    return [
+        _serialize_post(
+            post,
+            authors_by_id.get(str(post.get("user_id", ""))),
+            comment_counts.get(str(post.get("_id", post.get("id", ""))), 0),
+        )
+        for post in posts
+    ]
 
 
 def validate_image_payload(images: list[str] | None) -> None:
@@ -109,13 +167,12 @@ async def create_post(post_in: PostCreate, background_tasks: BackgroundTasks, cu
     background_tasks.add_task(run_post_moderation_task, post_id, post_in.caption, post_in.images or [], current_user["_id"])
 
     created_post = await posts_collection.find_one({"_id": post_id})
-    created_post["id"] = str(created_post.pop("_id"))
-    return created_post
+    return _serialize_post(created_post, current_user, comments_count=0)
 
 @router.get("/", response_model=List[PostResponse])
 async def get_posts(limit: int = Query(20, ge=1, le=100), skip: int = Query(0, ge=0)):
     posts = await posts_collection.find().sort("created_at", -1).skip(skip).limit(limit).to_list(length=limit)
-    return [{**{k: v for k, v in p.items() if k != "_id"}, "id": str(p.get("_id"))} for p in posts]
+    return await _serialize_posts(posts)
 
 @router.get("/{id}", response_model=PostResponse)
 async def get_post(id: str):
@@ -124,8 +181,7 @@ async def get_post(id: str):
     post = await posts_collection.find_one({"_id": ObjectId(id)})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    post["id"] = str(post.pop("_id"))
-    return post
+    return (await _serialize_posts([post]))[0]
 
 @router.post("/{id}/like")
 async def like_post(id: str, current_user: dict = Depends(get_current_user)):
@@ -190,7 +246,6 @@ async def update_post(id: str, post_in: PostUpdate, background_tasks: Background
 
     await posts_collection.update_one({"_id": ObjectId(id)}, {"$set": update_data})
     updated_post = await posts_collection.find_one({"_id": ObjectId(id)})
-    updated_post["id"] = str(updated_post.pop("_id"))
 
     if "caption" in update_data or "images" in update_data:
         background_tasks.add_task(
@@ -201,7 +256,7 @@ async def update_post(id: str, post_in: PostUpdate, background_tasks: Background
             current_user["_id"],
         )
 
-    return updated_post
+    return (await _serialize_posts([updated_post]))[0]
 
 @router.delete("/{id}")
 async def delete_post(id: str, current_user: dict = Depends(get_current_user)):

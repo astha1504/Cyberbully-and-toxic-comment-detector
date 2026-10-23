@@ -53,12 +53,42 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
     return result
 
 @router.get("/messages/{conv_id}")
-async def get_messages(conv_id: str, conv = Depends(get_conversation_or_404)):
+async def get_messages(
+    conv_id: str,
+    current_user: dict = Depends(get_current_user),
+    conv: dict = Depends(get_conversation_or_404),
+):
+    await messages_collection.update_many(
+        {
+            "conversation_id": str(conv["_id"]),
+            "sender_id": {"$ne": str(current_user["_id"])},
+            "delivery_status": {"$ne": "blocked"},
+            "is_read": False,
+        },
+        {"$set": {"is_read": True}},
+    )
     msgs = await messages_collection.find({
-        "conversation_id": conv_id,
+        "conversation_id": str(conv["_id"]),
         "delivery_status": {"$ne": "blocked"},
     }).sort("created_at", 1).to_list(1000)
     return [{**{k: v for k, v in m.items() if k != "_id"}, "id": str(m["_id"])} for m in msgs]
+
+@router.patch("/messages/{conv_id}/read")
+async def mark_conversation_read(
+    conv_id: str,
+    current_user: dict = Depends(get_current_user),
+    conv: dict = Depends(get_conversation_or_404),
+):
+    result = await messages_collection.update_many(
+        {
+            "conversation_id": str(conv["_id"]),
+            "sender_id": {"$ne": str(current_user["_id"])},
+            "delivery_status": {"$ne": "blocked"},
+            "is_read": False,
+        },
+        {"$set": {"is_read": True}},
+    )
+    return {"marked_read": result.modified_count}
 
 @router.post("/conversation")
 async def create_conversation(data: dict, current_user: dict = Depends(get_current_user)):

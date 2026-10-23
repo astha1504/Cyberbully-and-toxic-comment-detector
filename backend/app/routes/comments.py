@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from typing import List
 from datetime import datetime
 from bson import ObjectId
-from ..database import comments_collection, notifications_collection
+from ..database import comments_collection, notifications_collection, users_collection
 from ..models.social import CommentCreate, CommentUpdate, CommentResponse
 from ..routes.auth import get_current_user
 from ..services.moderation_service import check_toxicity, find_keyword_matches
@@ -10,6 +10,36 @@ from ..services.websocket_manager import manager
 from ..services.user_behaviour_service import is_muted, record_violation
 
 router = APIRouter(prefix="/comments", tags=["Comments"])
+COMMENT_AUTHOR_FIELDS = {"username": 1, "name": 1, "profile_picture": 1}
+
+
+def _serialize_comment(comment: dict, author: dict | None = None) -> dict:
+    result = {key: value for key, value in comment.items() if key != "_id"}
+    result["id"] = str(comment.get("_id", comment.get("id", "")))
+    result["user_name"] = (author or {}).get("username") or (author or {}).get("name")
+    result["user_profile_picture"] = (author or {}).get("profile_picture")
+    return result
+
+
+async def _serialize_comments(comments: list[dict]) -> list[dict]:
+    author_ids = {
+        str(comment.get("user_id"))
+        for comment in comments
+        if ObjectId.is_valid(str(comment.get("user_id", "")))
+    }
+    authors_by_id = {}
+
+    if author_ids:
+        authors = await users_collection.find(
+            {"_id": {"$in": [ObjectId(author_id) for author_id in author_ids]}},
+            COMMENT_AUTHOR_FIELDS,
+        ).to_list(length=len(author_ids))
+        authors_by_id = {str(author["_id"]): author for author in authors}
+
+    return [
+        _serialize_comment(comment, authors_by_id.get(str(comment.get("user_id", ""))))
+        for comment in comments
+    ]
 
 async def run_moderation_task(comment_id: ObjectId, text: str, user_id: ObjectId):
     # Call the ML model
@@ -85,8 +115,7 @@ async def create_comment(
     background_tasks.add_task(run_moderation_task, comment_id, comment_in.text, current_user["_id"])
     
     created_comment = await comments_collection.find_one({"_id": comment_id})
-    created_comment["id"] = str(created_comment.pop("_id"))
-    return created_comment
+    return _serialize_comment(created_comment, current_user)
 
 @router.patch("/{id}", response_model=CommentResponse)
 async def update_comment(
@@ -122,17 +151,16 @@ async def update_comment(
 
     await comments_collection.update_one({"_id": ObjectId(id)}, {"$set": update_data})
     updated_comment = await comments_collection.find_one({"_id": ObjectId(id)})
-    updated_comment["id"] = str(updated_comment.pop("_id"))
 
     if "text" in update_data:
         background_tasks.add_task(run_moderation_task, ObjectId(id), update_data["text"], current_user["_id"])
 
-    return updated_comment
+    return (await _serialize_comments([updated_comment]))[0]
 
 @router.get("/post/{post_id}", response_model=List[CommentResponse])
 async def get_post_comments(post_id: str):
     comments = await comments_collection.find({"post_id": post_id}).to_list(100)
-    return [{**{k: v for k, v in c.items() if k != "_id"}, "id": str(c.get("_id"))} for c in comments]
+    return await _serialize_comments(comments)
 
 @router.delete("/{id}")
 async def delete_comment(id: str, current_user: dict = Depends(get_current_user)):
